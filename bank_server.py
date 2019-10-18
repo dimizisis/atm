@@ -9,6 +9,7 @@ DATABASE = 'bank_db'
 
 class BankServer():
 
+    # MSGS
     DEPOSITION_SUCCESS_MSG = 'Deposition successful'
     WITHDRAWAL_SUCCESS_MSG = 'Withdrawal successful'
     CUSTOMER_ADDITION_SUCCESS_MSG = 'Successfully added customer'
@@ -158,7 +159,7 @@ class BankServer():
         Returns True if it is
         Returns False if not
         '''
-        return (amount % 20 or amount % 50 or amount % 70)
+        return (amount % 20 == 0 or amount % 50 == 0 or amount % 70 == 0)
         
     def deposit(self, cid, amount):
         '''
@@ -189,5 +190,5 @@ class BankServer():
 if __name__ == '__main__':
     bank_server = BankServer(CLIENT, DATABASE)
     # bank_server.deposit(2, 540)
-    # bank_server.withdraw(1, 340)
+    # bank_server.withdraw(1, 10)
     # bank_server.change_customer_pin(1)
