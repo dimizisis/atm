@@ -9,11 +9,22 @@ DATABASE = 'bank_db'
 
 class BankServer():
 
-    DEPOSITION_SUCCESS_MSG = 'Deposition successful!'
-    WITHDRAWAL_SUCCESS_MSG = 'Withdrawal successful!'
+    DEPOSITION_SUCCESS_MSG = 'Deposition successful'
+    WITHDRAWAL_SUCCESS_MSG = 'Withdrawal successful'
+    CUSTOMER_ADDITION_SUCCESS_MSG = 'Successfully added customer'
+    CUSTOMER_REMOVAL_SUCCESS_MSG = 'Successfully removed customer'
 
-    DEPOSITION_FAILURE_MSG = 'Deposition failed!'
-    WITHDRAWAL_FAILURE_MSG = 'Withdrawal failed!'
+    # ERRORS
+    CUSTOMER_DOES_NOT_EXIST_ERR = 'Customer does not exist'
+    AMOUNT_NOT_VALID_ERR = 'Not a valid amount'
+    CUSTOMER_NOT_ADDED_ERR = 'Customer cannot be added to database'
+    CUSTOMER_NOT_REMOVED_ERR = 'Customer cannot be removed from database'
+    BALANCE_NOT_INIT_ERR = 'Balance not initialized'
+    BALANCE_NOT_ENOUGH_ERR = 'Balance not enough to withdraw'
+    BANKNOTES_NOT_VALID_ERR = 'Try another amount (banknotes: 20€, 50€)'
+    DEPOSITION_FAILURE_ERR = 'Deposition failed'
+    WITHDRAWAL_FAILURE_ERR = 'Withdrawal failed'
+
 
     def __init__(self, client, database):
         self.client = pymongo.MongoClient(client)
@@ -43,12 +54,11 @@ class BankServer():
             customer = {'cid': cid, 'username': username, 'pin': self.generate_pin()}
             self.db.customer.insert_one(customer)
             self.init_balance(cid)
-            print('Successfully added customer '+ username)
-            return True
-        except Exception as e:
-            print('Something went wrong!')
-            print(e)
-            return False
+            print(self.CUSTOMER_ADDITION_SUCCESS_MSG + ' ' + username)
+            return True, self.CUSTOMER_ADDITION_SUCCESS_MSG
+        except:
+            print(self.CUSTOMER_NOT_ADDED_ERR)
+            return False, self.CUSTOMER_NOT_ADDED_ERR
 
     def delete_customer(self, cid=None, username=None):
         '''
@@ -60,19 +70,19 @@ class BankServer():
         if username is None:    # if we track the document by id
             try:
                 self.db.customer.delete_one({'cid': cid})
-                print('Sucessful removed customer with id '+cid)
-                return True
+                print(self.CUSTOMER_REMOVAL_SUCCESS_MSG + ' with id '+cid)
+                return True, self.CUSTOMER_REMOVAL_SUCCESS_MSG
             except:
-                print('Unsucessful removal!')
-                return False
+                print(self.CUSTOMER_NOT_REMOVED_ERR)
+                return False, self.CUSTOMER_NOT_REMOVED_ERR
         # else we track the document by username
         try:
             self.db.customer.delete_one({'username': username})
-            print('Sucessful removed customer '+username)
-            return True
+            print(self.CUSTOMER_REMOVAL_SUCCESS_MSG +' with username ' +username)
+            return True, self.CUSTOMER_REMOVAL_SUCCESS_MSG
         except:
-            print('Unsucessful removal!')
-            return False
+            print(self.CUSTOMER_NOT_REMOVED_ERR)
+            return False, self.CUSTOMER_NOT_REMOVED_ERR
 
     def change_customer_pin(self, cid):
         '''
@@ -99,8 +109,10 @@ class BankServer():
             bid = cid = self.db.balance.count_documents({})+1
             balance_doc = {'bid': bid, 'cid': cid, 'balance': 0, 'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
             self.db.balance.insert_one(balance_doc)
+            return True
         except:
-            print('Balance not initialized!')
+            print(self.BALANCE_NOT_INIT_ERR)
+            return False
 
     def withdraw(self, cid, amount):
         '''
@@ -110,20 +122,20 @@ class BankServer():
         Returns False if withdrawal unsuccessful
         '''
         if not self.customer_exists(cid):
-            print('Customer does not exist')
-            return False
+            print(self.CUSTOMER_DOES_NOT_EXIST_ERR)
+            return False, self.CUSTOMER_DOES_NOT_EXIST_ERR
 
         if amount <= 0:
-            print('Not a valid amount to withdraw')
-            return False
+            print(self.AMOUNT_NOT_VALID_ERR)
+            return False, self.AMOUNT_NOT_VALID_ERR
 
         if self.db.balance.find_one({'cid': cid}, {'balance': 1})['balance'] < amount:
-            print('Not enough balance')
-            return False
+            print(self.BALANCE_NOT_ENOUGH_ERR)
+            return False, self.BALANCE_NOT_ENOUGH_ERR
         
         if not self.check_banknotes(amount):
-            print('Try another amount (banknotes: 20€, 50€)')
-            return False
+            print(self.BANKNOTES_NOT_VALID_ERR)
+            return False, self.BANKNOTES_NOT_VALID_ERR
 
         try:
             withdrawal_doc = {'wid': self.db.withdraw.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
@@ -133,8 +145,8 @@ class BankServer():
             print(self.WITHDRAWAL_SUCCESS_MSG)
             return True, self.WITHDRAWAL_SUCCESS_MSG
         except:
-            print(self.WITHDRAWAL_FAILURE_MSG)
-            return False, self.WITHDRAWAL_FAILURE_MSG
+            print(self.WITHDRAWAL_FAILURE_ERR)
+            return False, self.WITHDRAWAL_FAILURE_ERR
 
     def check_banknotes(self, amount):
         '''
@@ -142,7 +154,7 @@ class BankServer():
         Returns True if it is
         Returns False if not
         '''
-        return amount % 20 or amount % 50 or amount % 70
+        return (amount % 20 or amount % 50 or amount % 70)
         
     def deposit(self, cid, amount):
         '''
@@ -152,12 +164,12 @@ class BankServer():
         Returns False if deposition unsuccessful
         '''
         if not self.customer_exists(cid):
-            print('Customer does not exist')
-            return False
+            print(self.CUSTOMER_DOES_NOT_EXIST_ERR)
+            return False, self.CUSTOMER_DOES_NOT_EXIST_ERR
         
         if amount <= 0:
-            print('Not a valid amount to withdraw')
-            return False
+            print(self.AMOUNT_NOT_VALID_ERR)
+            return False, self.AMOUNT_NOT_VALID_ERR
 
         try:
             deposition_doc = {'did': self.db.deposit.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
@@ -167,8 +179,8 @@ class BankServer():
             print(self.DEPOSITION_SUCCESS_MSG)
             return True, self.DEPOSITION_SUCCESS_MSG
         except:
-            print(self.DEPOSITION_FAILURE_MSG)
-            return False, self.DEPOSITION_FAILURE_MSG
+            print(self.DEPOSITION_FAILURE_ERR)
+            return False, self.DEPOSITION_FAILURE_ERR
  
 if __name__ == '__main__':
     bank_server = BankServer(CLIENT, DATABASE)
