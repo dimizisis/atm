@@ -13,6 +13,7 @@ class BankServer():
     WITHDRAWAL_SUCCESS_MSG = 'Withdrawal successful'
     CUSTOMER_ADDITION_SUCCESS_MSG = 'Successfully added customer'
     CUSTOMER_REMOVAL_SUCCESS_MSG = 'Successfully removed customer'
+    CUSTOMER_PIN_CHANGE_SUCCESS_MSG = 'Successfully changed pin'
 
     # ERRORS
     CUSTOMER_DOES_NOT_EXIST_ERR = 'Customer does not exist'
@@ -24,6 +25,7 @@ class BankServer():
     BANKNOTES_NOT_VALID_ERR = 'Try another amount (banknotes: 20€, 50€)'
     DEPOSITION_FAILURE_ERR = 'Deposition failed'
     WITHDRAWAL_FAILURE_ERR = 'Withdrawal failed'
+    CUSTOMER_PIN_CHANGE_FAILURE_ERR = 'Cannot change ping'
 
 
     def __init__(self, client, database):
@@ -90,10 +92,12 @@ class BankServer():
         with another random one
         '''
         try:
-            self.db.customer.update_one({'cid': cid}, {'pin': self.generate_pin()})
-            return True
+            self.db.customer.update_one({'cid': cid}, {'$set': {'pin': self.generate_pin()}})
+            print(self.CUSTOMER_PIN_CHANGE_SUCCESS_MSG)
+            return True, self.CUSTOMER_PIN_CHANGE_SUCCESS_MSG
         except:
-            return False
+            print(self.CUSTOMER_PIN_CHANGE_FAILURE_ERR)
+            return False, self.CUSTOMER_PIN_CHANGE_FAILURE_ERR
 
     def generate_pin(self):
         '''
@@ -184,5 +188,6 @@ class BankServer():
  
 if __name__ == '__main__':
     bank_server = BankServer(CLIENT, DATABASE)
-    bank_server.deposit(2, 540)
+    # bank_server.deposit(2, 540)
     # bank_server.withdraw(1, 340)
+    # bank_server.change_customer_pin(1)
