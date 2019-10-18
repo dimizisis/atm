@@ -9,6 +9,12 @@ DATABASE = 'bank_db'
 
 class BankServer():
 
+    DEPOSITION_SUCCESS_MSG = 'Deposition successful!'
+    WITHDRAWAL_SUCCESS_MSG = 'Withdrawal successful!'
+
+    DEPOSITION_FAILURE_MSG = 'Deposition failed!'
+    WITHDRAWAL_FAILURE_MSG = 'Withdrawal failed!'
+
     def __init__(self, client, database):
         self.client = pymongo.MongoClient(client)
         self.db = self.client.get_database(database)
@@ -20,7 +26,7 @@ class BankServer():
         Returns True if it exists
         Returns False if doesn't
         '''
-        customer = self.db.customer.find_one({}, {'id': cid})
+        customer = self.db.customer.find_one({'cid': cid})
         if customer is not None:
             return True
         return False
@@ -43,7 +49,6 @@ class BankServer():
             print('Something went wrong!')
             print(e)
             return False
-
 
     def delete_customer(self, cid=None, username=None):
         '''
@@ -74,7 +79,11 @@ class BankServer():
         Changes customer's pin (based on id)
         with another random one
         '''
-        self.db.customer.update_one({'cid': cid}, {'pin': self.generate_pin()})
+        try:
+            self.db.customer.update_one({'cid': cid}, {'pin': self.generate_pin()})
+            return True
+        except:
+            return False
 
     def generate_pin(self):
         '''
@@ -84,10 +93,11 @@ class BankServer():
 
     def init_balance(self, cid):
         '''
-        Initializes customer's new balance
+        Initializes new customer's balance
         '''
         try:
-            balance_doc = {'cid': cid, 'balance': 0, 'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
+            bid = cid = self.db.balance.count_documents({})+1
+            balance_doc = {'bid': bid, 'cid': cid, 'balance': 0, 'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
             self.db.balance.insert_one(balance_doc)
         except:
             print('Balance not initialized!')
@@ -99,10 +109,41 @@ class BankServer():
         Returns True if withdrawal successful
         Returns False if withdrawal unsuccessful
         '''
-        # if self.customer_exists(cid):
-        #     print(self.db.balance.find_one({'cid': cid}, { '_id': 0, 'balance': 1 }))
-        # # if self.db.balance.find_one({'id': id}, { '_id': 0, 'balance': 1 }):
+        if not self.customer_exists(cid):
+            print('Customer does not exist')
+            return False
 
+        if amount <= 0:
+            print('Not a valid amount to withdraw')
+            return False
+
+        if self.db.balance.find_one({'cid': cid}, {'balance': 1})['balance'] < amount:
+            print('Not enough balance')
+            return False
+        
+        if not self.check_banknotes(amount):
+            print('Try another amount (banknotes: 20€, 50€)')
+            return False
+
+        try:
+            withdrawal_doc = {'wid': self.db.withdraw.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
+            balance_doc = {'$inc': {'balance': -amount}, '$set': {'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}}
+            self.db.withdraw.insert_one(withdrawal_doc)
+            self.db.balance.update_one({'cid': cid}, balance_doc)
+            print(self.WITHDRAWAL_SUCCESS_MSG)
+            return True, self.WITHDRAWAL_SUCCESS_MSG
+        except:
+            print(self.WITHDRAWAL_FAILURE_MSG)
+            return False, self.WITHDRAWAL_FAILURE_MSG
+
+    def check_banknotes(self, amount):
+        '''
+        Checks if amount is divided by 20 or 50 or 70
+        Returns True if it is
+        Returns False if not
+        '''
+        return amount % 20 or amount % 50 or amount % 70
+        
     def deposit(self, cid, amount):
         '''
         Customer deposits into his account
@@ -110,16 +151,26 @@ class BankServer():
         Returns True if deposition successful
         Returns False if deposition unsuccessful
         '''
-        if self.customer_exists(cid) and amount > 0:
-            deposit_doc = {'did': self.db.deposit.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d')}
+        if not self.customer_exists(cid):
+            print('Customer does not exist')
+            return False
+        
+        if amount <= 0:
+            print('Not a valid amount to withdraw')
+            return False
+
+        try:
+            deposition_doc = {'did': self.db.deposit.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
             balance_doc = {'$inc': {'balance': amount}, '$set': {'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}}
-            self.db.deposit.insert_one(deposit_doc)
+            self.db.deposit.insert_one(deposition_doc)
             self.db.balance.update_one({'cid': cid}, balance_doc)
-            print('Deposition successful!')
-            return True
-        print('Deposition unsuccessful!')   
+            print(self.DEPOSITION_SUCCESS_MSG)
+            return True, self.DEPOSITION_SUCCESS_MSG
+        except:
+            print(self.DEPOSITION_FAILURE_MSG)
+            return False, self.DEPOSITION_FAILURE_MSG
  
 if __name__ == '__main__':
     bank_server = BankServer(CLIENT, DATABASE)
-    bank_server.insert_customer('dimizisis')
-    bank_server.deposit(1, 320)
+    bank_server.deposit(2, 540)
+    # bank_server.withdraw(1, 340)
