@@ -55,7 +55,7 @@ class BankServerProtocol(ServerProtocol):
         
     def perform_action(self, arr):
 
-        username = arr[0]
+        username = arr[0]   # String we get according to protocol: <USERNAME> <PIN> <ACTION> ...
         pin = int(arr[1])
         action = arr[2]
 
@@ -310,6 +310,10 @@ class BankServerProtocol(ServerProtocol):
             return False
  
 def read_config_file():
+    '''
+    Reads config file, which contains client and database name\n
+    Config filename set as constant (config.ini)
+    '''
     try:
         config = configparser.ConfigParser()
         curr_dir = os.path.dirname(os.path.abspath(__file__))
