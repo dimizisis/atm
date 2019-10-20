@@ -324,10 +324,5 @@ def read_config_file():
 if __name__ == '__main__':
     client, database = read_config_file()
     protocol = BankServerProtocol(client, database)
-    protocol.daily_withdrawal_limit_reached(2)
     bank_server = MultiThreadedServer(protocol=protocol)
-    # bank_server.listen()
-    # bank_server.insert_customer('dimizisis', 'ZISIS DIMITRIOS')
-    # bank_server.deposit(2, 540)
-    # bank_server.withdraw(1, 10)
-    # bank_server.change_customer_pin(1)
+    bank_server.listen()
