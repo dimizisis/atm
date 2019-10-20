@@ -40,6 +40,9 @@ class BankServerProtocol(ServerProtocol):
     # CHARGE_DESCR
     BALANCE_INFO_CHARGES_DESCR = "Information about customer's balance"
 
+    # DAILY WITHDRAWAL LIMIT
+    DAILY_WITHDRAWL_LIMIT = 850
+
     def __init__(self, client, database):
         self.client = pymongo.MongoClient(client)
         self.db = self.client.get_database(database)
@@ -244,6 +247,10 @@ class BankServerProtocol(ServerProtocol):
             print(self.BANKNOTES_NOT_VALID_ERR)
             return False
 
+        if self.daily_withdrawal_limit_reached(cid):
+            print(self.DAILY_WITHDRAWAL_LIMIT_ERR)
+            return False
+
         try:
             withdrawal_doc = {'wid': self.db.withdraw.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
             balance_doc = {'$inc': {'balance': -float(amount)}, '$set': {'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}}
@@ -254,6 +261,22 @@ class BankServerProtocol(ServerProtocol):
         except:
             print(self.WITHDRAWAL_FAILURE_ERR)
             return False
+
+    def daily_withdrawal_limit_reached(self, cid):
+        '''
+        Checks if customer reached his daily withdrawal limit (Set as constant 850)\n
+        Takes cid as parameter\n
+        Returns True if limit reached\n
+        Returns False if limit is not reached
+        '''
+        curr_date = datetime.today().strftime('%Y-%m-%d')
+        pipe = [{ "$match": { 'cid': { "$eq": cid } } }, { "$match": { 'time': { "$regex": '.*'+curr_date+'.*' } } }, {'$group': {'_id': "$cid", 'total_amount': {'$sum': '$amount'}}}]
+        results = list(self.db.withdraw.aggregate(pipeline=pipe)) # we get a list with one dict inside (cid and amount that was withdrawn today)
+        total_amount_withdrawn = results[0]['total_amount'] 
+
+        if total_amount_withdrawn > self.DAILY_WITHDRAWL_LIMIT:
+            return True
+        return False
 
     def check_banknotes(self, amount):
         '''
@@ -301,8 +324,9 @@ def read_config_file():
 if __name__ == '__main__':
     client, database = read_config_file()
     protocol = BankServerProtocol(client, database)
+    protocol.daily_withdrawal_limit_reached(2)
     bank_server = MultiThreadedServer(protocol=protocol)
-    bank_server.listen()
+    # bank_server.listen()
     # bank_server.insert_customer('dimizisis', 'ZISIS DIMITRIOS')
     # bank_server.deposit(2, 540)
     # bank_server.withdraw(1, 10)
