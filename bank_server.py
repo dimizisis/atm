@@ -27,7 +27,7 @@ class BankServer():
     DEPOSITION_FAILURE_ERR = 'Deposition failed'
     WITHDRAWAL_FAILURE_ERR = 'Withdrawal failed'
     CUSTOMER_PIN_CHANGE_FAILURE_ERR = 'Cannot change ping'
-
+    USERNAME_TAKEN_ERR = 'Sorry, username already taken'
 
     def __init__(self, client, database):
         self.client = pymongo.MongoClient(client)
@@ -45,7 +45,7 @@ class BankServer():
             return True
         return False
 
-    def insert_customer(self, username):
+    def insert_customer(self, username, full_name):
         '''
         Adds a customer to customers' collection
         Takes username as argument, generates id and pin.
@@ -53,8 +53,15 @@ class BankServer():
         Returns False if addition fails.
         '''
         try:
+            cus = self.db.customer.find_one({'username': username})
+            if cus is not None:
+                print(self.USERNAME_TAKEN_ERR)
+                return False, self.USERNAME_TAKEN_ERR
+        except:
+            print('Application crashed')
+        try:
             cid = self.db.customer.count_documents({})+1
-            customer = {'cid': cid, 'username': username, 'pin': self.generate_pin()}
+            customer = {'cid': cid, 'username': username, 'full_name': full_name, 'pin': self.generate_pin()}
             self.db.customer.insert_one(customer)
             self.init_balance(cid)
             print(self.CUSTOMER_ADDITION_SUCCESS_MSG + ' ' + username)
@@ -189,6 +196,7 @@ class BankServer():
  
 if __name__ == '__main__':
     bank_server = BankServer(CLIENT, DATABASE)
+    # bank_server.insert_customer('dimizisis', 'ZISIS DIMITRIOS')
     # bank_server.deposit(2, 540)
     # bank_server.withdraw(1, 10)
     # bank_server.change_customer_pin(1)
