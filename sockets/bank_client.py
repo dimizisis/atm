@@ -31,8 +31,8 @@ class BankClientProtocol(ClientProtocol):
 
         actions = ['WITHDRAW', 'DEPOSIT', 'CHANGE_PIN', 'GET_BALANCE']
 
-        action = actions[3]
-
+        action = random.choice(actions)
+        
         if action == 'WITHDRAW':
             output = self.username + ' ' + str(self.pin) + ' ' + action + ' ' + str(20)
         elif action == 'DEPOSIT':

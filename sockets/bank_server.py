@@ -123,8 +123,8 @@ class BankServerProtocol(ServerProtocol):
         Returns None if not found
         '''
         try:
-            balance = self.db.balance.find_one({'cid': cid}, {'balance': 1})['balance']
             self.charge(cid, self.BALANCE_INFO_CHARGES, self.BALANCE_INFO_CHARGES_DESCR)
+            balance = self.db.balance.find_one({'cid': cid}, {'balance': 1})['balance']
             return balance
         except:
             print(BALANCE_NOT_FOUND_ERR)
@@ -247,7 +247,7 @@ class BankServerProtocol(ServerProtocol):
             print(self.BANKNOTES_NOT_VALID_ERR)
             return False
 
-        if self.daily_withdrawal_limit_reached(cid):
+        if self.daily_withdrawal_limit_reached(cid, amount):
             print(self.DAILY_WITHDRAWAL_LIMIT_ERR)
             return False
 
@@ -262,20 +262,23 @@ class BankServerProtocol(ServerProtocol):
             print(self.WITHDRAWAL_FAILURE_ERR)
             return False
 
-    def daily_withdrawal_limit_reached(self, cid):
+    def daily_withdrawal_limit_reached(self, cid, amount):
         '''
         Checks if customer reached his daily withdrawal limit (Set as constant 850)\n
         Takes cid as parameter\n
         Returns True if limit reached\n
         Returns False if limit is not reached
         '''
+        if amount > DAILY_WITHDRAWL_LIMIT:
+            return False
         curr_date = datetime.today().strftime('%Y-%m-%d')
         pipe = [{ "$match": { 'cid': { "$eq": cid } } }, { "$match": { 'time': { "$regex": '.*'+curr_date+'.*' } } }, {'$group': {'_id': "$cid", 'total_amount': {'$sum': '$amount'}}}]
         results = list(self.db.withdraw.aggregate(pipeline=pipe)) # we get a list with one dict inside (cid and amount that was withdrawn today)
         total_amount_withdrawn = results[0]['total_amount'] 
-
-        if total_amount_withdrawn > self.DAILY_WITHDRAWL_LIMIT:
-            return True
+        if results:
+            total_amount_withdrawn = results[0]['total_amount'] 
+            if total_amount_withdrawn > DAILY_WITHDRAWL_LIMIT:
+                return True
         return False
 
     def check_banknotes(self, amount):
