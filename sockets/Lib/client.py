@@ -1,6 +1,6 @@
+
 import socket
 from abc import ABCMeta, abstractmethod
-
 
 class Client:
 
@@ -31,7 +31,6 @@ class Client:
 
         # Close the connection with server
         self.data_socket.close()
-
 
 class ClientProtocol:
     __metaclass__ = ABCMeta

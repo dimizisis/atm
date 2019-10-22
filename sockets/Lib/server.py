@@ -1,7 +1,7 @@
+
 import socket
 import threading
 from abc import ABCMeta, abstractmethod
-
 
 class IterativeServer:
 
@@ -44,7 +44,6 @@ class IterativeServer:
                 print('Client disconnected')
                 exit(1)
 
-
 class Server:
 
     def __init__(self, port=1234, protocol=None):
@@ -58,7 +57,6 @@ class Server:
         # Put the socket into listening mode
         self.connection_socket.listen(5)
         print('Server is listening to port ', self.port)
-
 
         try:
 
@@ -84,7 +82,6 @@ class Server:
         except:
             print('Client disconnected')
             exit(1)
-
 
 class MultiThreadedServer:
 
