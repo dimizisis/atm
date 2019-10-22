@@ -64,13 +64,13 @@ class BankServerProtocol(ServerProtocol):
 
             if action == 'WITHDRAW':
                 amount = arr[3]
-                if self.withdraw(customer['cid'], amount):
+                if self.withdraw(customer['cid'], float(amount)):
                     return True
                 return False
                 
             elif action == 'DEPOSIT':
                 amount = arr[3]
-                if self.deposit(customer['cid'], amount):
+                if self.deposit(customer['cid'], float(amount)):
                     return True
                 return False
             
@@ -274,7 +274,6 @@ class BankServerProtocol(ServerProtocol):
         curr_date = datetime.today().strftime('%Y-%m-%d')
         pipe = [{ "$match": { 'cid': { "$eq": cid } } }, { "$match": { 'time': { "$regex": '.*'+curr_date+'.*' } } }, {'$group': {'_id': "$cid", 'total_amount': {'$sum': '$amount'}}}]
         results = list(self.db.withdraw.aggregate(pipeline=pipe)) # we get a list with one dict inside (cid and amount that was withdrawn today)
-        total_amount_withdrawn = results[0]['total_amount'] 
         if results:
             total_amount_withdrawn = results[0]['total_amount'] 
             if total_amount_withdrawn > DAILY_WITHDRAWL_LIMIT:

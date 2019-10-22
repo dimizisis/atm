@@ -24,14 +24,14 @@ class BankClientProtocol(ClientProtocol):
     CUSTOMER_PIN_CHANGE_FAILURE_ERR = 'Cannot change ping'
     USERNAME_TAKEN_ERR = 'Sorry, username already taken'
 
-    username = 'dimizisis'
-    pin = 9847
+    username = 'zdimitris'
+    pin = 3473
 
     def prepare_request(self):
 
         actions = ['WITHDRAW', 'DEPOSIT', 'CHANGE_PIN', 'GET_BALANCE']
 
-        action = random.choice(actions)
+        action = 'DEPOSIT'
         
         if action == 'WITHDRAW':
             output = self.username + ' ' + str(self.pin) + ' ' + action + ' ' + str(20)
