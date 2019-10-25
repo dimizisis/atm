@@ -242,8 +242,10 @@ class BankServerProtocol(ServerProtocol):
             balance_doc = {'$inc': {'balance': -float(amount)}, '$set': {'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}}
             self.db.withdraw.insert_one(withdrawal_doc)
             self.db.balance.update_one({'cid': cid}, balance_doc)
+            print(self.WITHDRAWAL_SUCCESS_MSG)
             return self.WITHDRAWAL_SUCCESS_MSG
         except:
+            print(self.WITHDRAWAL_FAILURE_ERR)
             return self.WITHDRAWAL_FAILURE_ERR
 
     def daily_withdrawal_limit_reached(self, cid, amount):
@@ -253,14 +255,14 @@ class BankServerProtocol(ServerProtocol):
         Returns True if limit reached\n
         Returns False if limit is not reached
         '''
-        if amount > DAILY_WITHDRAWL_LIMIT:
+        if amount > self.DAILY_WITHDRAWL_LIMIT:
             return False
         curr_date = datetime.today().strftime('%Y-%m-%d')
         pipe = [{ "$match": { 'cid': { "$eq": cid } } }, { "$match": { 'time': { "$regex": '.*'+curr_date+'.*' } } }, {'$group': {'_id': "$cid", 'total_amount': {'$sum': '$amount'}}}]
         results = list(self.db.withdraw.aggregate(pipeline=pipe)) # we get a list with one dict inside (cid and amount that was withdrawn today)
         if results:
             total_amount_withdrawn = results[0]['total_amount'] 
-            if total_amount_withdrawn > DAILY_WITHDRAWL_LIMIT:
+            if total_amount_withdrawn > self.DAILY_WITHDRAWL_LIMIT:
                 return True
         return False
 
@@ -311,5 +313,5 @@ def read_config_file():
 if __name__ == '__main__':
     client, database = read_config_file()
     protocol = BankServerProtocol(client, database)
-    bank_server = MultiThreadedServer(protocol=protocol)
+    bank_server = MultiThreadedServer(ip='192.168.1.5', protocol=protocol)
     bank_server.listen()

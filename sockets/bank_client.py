@@ -12,12 +12,10 @@ class BankClientProtocol(ClientProtocol):
 
     def prepare_request(self):
         
-        if action == 'WITHDRAW':
-            output = self.username + ' ' + str(self.pin) + ' ' + action + ' ' + str(20)
-        elif action == 'DEPOSIT':
-            output = self.username + ' ' + str(self.pin) + ' ' + action + ' ' + str(20)
+        if action == 'WITHDRAW' or action == 'DEPOSIT':
+            output = self.username + ' ' + str(self.pin) + ' ' + action + ' ' + str(amount)
         elif action == 'CHANGE_PIN':
-            output = self.username + ' ' + str(self.pin) + ' ' + action + ' ' + str(1405)
+            output = self.username + ' ' + str(self.pin) + ' ' + action + ' ' + str(pin)
         elif action == 'GET_BALANCE':
             output = self.username + ' ' + str(self.pin) + ' ' + action
 

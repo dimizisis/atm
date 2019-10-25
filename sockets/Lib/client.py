@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 class Client:
 
-    def __init__(self, host='localhost', port=1234, protocol=None):
+    def __init__(self, host='192.168.1.5', port=1234, protocol=None):
         self.protocol = protocol
         self.host = host
         self.port = port

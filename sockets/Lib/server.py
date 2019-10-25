@@ -85,11 +85,11 @@ class Server:
 
 class MultiThreadedServer:
 
-    def __init__(self, port=1234, protocol=None):
+    def __init__(self, ip='', port=1234, protocol=None):
         self.protocol = protocol
         self.port = port
         self.connection_socket = socket.socket()
-        self.connection_socket.bind(('', self.port))    # localhost
+        self.connection_socket.bind((ip, self.port))    # localhost
 
     def listen(self):
 
