@@ -1,49 +1,11 @@
-
-import pymongo
-import random
 from datetime import datetime
-import socket
-import threading
-from abc import ABCMeta, abstractmethod
-from Lib.server import MultiThreadedServer, ServerProtocol
-import configparser
-import os
-
-CONFIG_FILENAME = 'config.ini'
+import random
+import pymongo
+from return_messages import *
+from constants import *
+from SocketLib.server import ServerProtocol
 
 class BankServerProtocol(ServerProtocol):
-
-    # MSGS
-    DEPOSITION_SUCCESS_MSG = 'Deposition successful'
-    WITHDRAWAL_SUCCESS_MSG = 'Withdrawal successful'
-    CUSTOMER_ADDITION_SUCCESS_MSG = 'Successfully added customer'
-    CUSTOMER_REMOVAL_SUCCESS_MSG = 'Successfully removed customer'
-    CUSTOMER_PIN_CHANGE_SUCCESS_MSG = 'Successfully changed pin'
-
-    # ERRORS
-    CUSTOMER_DOES_NOT_EXIST_ERR = 'Customer does not exist'
-    AMOUNT_NOT_VALID_ERR = 'Not a valid amount'
-    CUSTOMER_NOT_ADDED_ERR = 'Customer cannot be added to database'
-    CUSTOMER_NOT_REMOVED_ERR = 'Customer cannot be removed from database'
-    BALANCE_NOT_INIT_ERR = 'Balance not initialized'
-    BALANCE_NOT_FOUND_ERR = 'Balance not found'
-    BALANCE_NOT_ENOUGH_ERR = 'Balance not enough to withdraw'
-    BANKNOTES_NOT_VALID_ERR = 'Try another amount (banknotes: 20€, 50€)'
-    DEPOSITION_FAILURE_ERR = 'Deposition failed'
-    WITHDRAWAL_FAILURE_ERR = 'Withdrawal failed'
-    CUSTOMER_PIN_CHANGE_FAILURE_ERR = 'Cannot change ping'
-    USERNAME_TAKEN_ERR = 'Sorry, username already taken'
-    ACTION_NOT_FOUND = 'Action not found'
-    WRONG_CREDENTIALS = 'Wrong credentials'
-
-    # CHARGES
-    BALANCE_INFO_CHARGES = 0.2
-
-    # CHARGE_DESCR
-    BALANCE_INFO_CHARGES_DESCR = "Information about customer's balance"
-
-    # DAILY WITHDRAWAL LIMIT
-    DAILY_WITHDRAWL_LIMIT = 850
 
     def __init__(self, client, database):
         self.client = pymongo.MongoClient(client)
@@ -80,9 +42,9 @@ class BankServerProtocol(ServerProtocol):
                 return self.get_customer_balance(customer['cid'])
 
             else:
-                return self.ACTION_NOT_FOUND
+                return ACTION_NOT_FOUND
 
-        return self.WRONG_CREDENTIALS
+        return WRONG_CREDENTIALS
 
     def authenticate(self, username, pin):
         '''
@@ -118,11 +80,11 @@ class BankServerProtocol(ServerProtocol):
         Returns None if not found
         '''
         try:
-            self.charge(cid, self.BALANCE_INFO_CHARGES, self.BALANCE_INFO_CHARGES_DESCR)
+            self.charge(cid, BALANCE_INFO_CHARGES, BALANCE_INFO_CHARGES_DESCR)
             balance = self.db.balance.find_one({'cid': cid}, {'balance': 1})['balance']
             return format(balance, '.3f')
         except:
-            return self.BALANCE_NOT_FOUND_ERR
+            return BALANCE_NOT_FOUND_ERR
         
         return None
 
@@ -151,7 +113,7 @@ class BankServerProtocol(ServerProtocol):
         try:
             cus = self.db.customer.find_one({'username': username})
             if cus is not None:
-                return self.USERNAME_TAKEN_ERR
+                return USERNAME_TAKEN_ERR
         except:
             print('Application crashed')
         try:
@@ -159,10 +121,10 @@ class BankServerProtocol(ServerProtocol):
             customer = {'cid': cid, 'username': username, 'full_name': full_name, 'pin': self.generate_pin()}
             self.db.customer.insert_one(customer)
             self.init_balance(cid)
-            print(self.CUSTOMER_ADDITION_SUCCESS_MSG + ' ' + username)
-            return self.CUSTOMER_ADDITION_SUCCESS_MSG
+            print(CUSTOMER_ADDITION_SUCCESS_MSG + ' ' + username)
+            return CUSTOMER_ADDITION_SUCCESS_MSG
         except:
-            return self.CUSTOMER_NOT_ADDED_ERR
+            return CUSTOMER_NOT_ADDED_ERR
 
     def delete_customer(self, cid=None, username=None):
         '''
@@ -174,18 +136,18 @@ class BankServerProtocol(ServerProtocol):
         if username is None:    # if we track the document by id
             try:
                 self.db.customer.delete_one({'cid': cid})
-                print(self.CUSTOMER_REMOVAL_SUCCESS_MSG + ' with id '+cid)
-                return self.CUSTOMER_REMOVAL_SUCCESS_MSG
+                print(CUSTOMER_REMOVAL_SUCCESS_MSG + ' with id '+cid)
+                return CUSTOMER_REMOVAL_SUCCESS_MSG
             except:
-                print(self.CUSTOMER_NOT_REMOVED_ERR)
-                return self.CUSTOMER_NOT_REMOVED_ERR
+                print(CUSTOMER_NOT_REMOVED_ERR)
+                return CUSTOMER_NOT_REMOVED_ERR
         # else we track the document by username
         try:
             self.db.customer.delete_one({'username': username})
-            print(self.CUSTOMER_REMOVAL_SUCCESS_MSG +' with username ' +username)
-            return self.CUSTOMER_REMOVAL_SUCCESS_MSG
+            print(CUSTOMER_REMOVAL_SUCCESS_MSG +' with username ' +username)
+            return CUSTOMER_REMOVAL_SUCCESS_MSG
         except:
-            return self.CUSTOMER_NOT_REMOVED_ERR
+            return CUSTOMER_NOT_REMOVED_ERR
 
     def change_customer_pin(self, cid, new_pin):
         '''
@@ -194,9 +156,9 @@ class BankServerProtocol(ServerProtocol):
         '''
         try:
             self.db.customer.update_one({'cid': cid}, {'$set': {'pin': new_pin}})
-            return self.CUSTOMER_PIN_CHANGE_SUCCESS_MSG
+            return CUSTOMER_PIN_CHANGE_SUCCESS_MSG
         except:
-            return self.CUSTOMER_PIN_CHANGE_FAILURE_ERR
+            return CUSTOMER_PIN_CHANGE_FAILURE_ERR
 
     def generate_pin(self):
         '''
@@ -214,7 +176,7 @@ class BankServerProtocol(ServerProtocol):
             self.db.balance.insert_one(balance_doc)
             return True
         except:
-            print(self.BALANCE_NOT_INIT_ERR)
+            print(BALANCE_NOT_INIT_ERR)
             return False
 
     def withdraw(self, cid, amount):
@@ -226,27 +188,27 @@ class BankServerProtocol(ServerProtocol):
         '''
 
         if amount <= 0:
-            return self.AMOUNT_NOT_VALID_ERR
+            return AMOUNT_NOT_VALID_ERR
 
         if self.db.balance.find_one({'cid': cid}, {'balance': 1})['balance'] < amount:
-            return self.BALANCE_NOT_ENOUGH_ERR
+            return BALANCE_NOT_ENOUGH_ERR
         
         if not self.check_banknotes(amount):
-            return self.BANKNOTES_NOT_VALID_ERR
+            return BANKNOTES_NOT_VALID_ERR
 
         if self.daily_withdrawal_limit_reached(cid, amount):
-            return self.DAILY_WITHDRAWAL_LIMIT_ERR
+            return DAILY_WITHDRAWAL_LIMIT_ERR
 
         try:
             withdrawal_doc = {'wid': self.db.withdraw.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
             balance_doc = {'$inc': {'balance': -float(amount)}, '$set': {'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}}
             self.db.withdraw.insert_one(withdrawal_doc)
             self.db.balance.update_one({'cid': cid}, balance_doc)
-            print(self.WITHDRAWAL_SUCCESS_MSG)
-            return self.WITHDRAWAL_SUCCESS_MSG
+            print(WITHDRAWAL_SUCCESS_MSG)
+            return WITHDRAWAL_SUCCESS_MSG
         except:
-            print(self.WITHDRAWAL_FAILURE_ERR)
-            return self.WITHDRAWAL_FAILURE_ERR
+            print(WITHDRAWAL_FAILURE_ERR)
+            return WITHDRAWAL_FAILURE_ERR
 
     def daily_withdrawal_limit_reached(self, cid, amount):
         '''
@@ -255,14 +217,17 @@ class BankServerProtocol(ServerProtocol):
         Returns True if limit reached\n
         Returns False if limit is not reached
         '''
-        if amount > self.DAILY_WITHDRAWL_LIMIT:
+        if amount > DAILY_WITHDRAWL_LIMIT:
             return False
-        curr_date = datetime.today().strftime('%Y-%m-%d')
+        try:
+            curr_date = datetime.today().strftime('%Y-%m-%d')
+        except Exception as e:
+            print(e)
         pipe = [{ "$match": { 'cid': { "$eq": cid } } }, { "$match": { 'time': { "$regex": '.*'+curr_date+'.*' } } }, {'$group': {'_id': "$cid", 'total_amount': {'$sum': '$amount'}}}]
         results = list(self.db.withdraw.aggregate(pipeline=pipe)) # we get a list with one dict inside (cid and amount that was withdrawn today)
         if results:
             total_amount_withdrawn = results[0]['total_amount'] 
-            if total_amount_withdrawn > self.DAILY_WITHDRAWL_LIMIT:
+            if total_amount_withdrawn > DAILY_WITHDRAWL_LIMIT:
                 return True
         return False
 
@@ -283,35 +248,13 @@ class BankServerProtocol(ServerProtocol):
         '''
         
         if amount <= 0:
-            return self.AMOUNT_NOT_VALID_ERR
+            return AMOUNT_NOT_VALID_ERR
 
         try:
             deposition_doc = {'did': self.db.deposit.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
             balance_doc = {'$inc': {'balance': float(amount)}, '$set': {'last_updated': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}}
             self.db.deposit.insert_one(deposition_doc)
             self.db.balance.update_one({'cid': cid}, balance_doc)
-            return self.DEPOSITION_SUCCESS_MSG
+            return DEPOSITION_SUCCESS_MSG
         except:
-            return self.DEPOSITION_FAILURE_ERR
- 
-def read_config_file():
-    '''
-    Reads config file, which contains client and database name\n
-    Config filename set as constant (config.ini)
-    '''
-    try:
-        config = configparser.ConfigParser()
-        curr_dir = os.path.dirname(os.path.abspath(__file__))
-        initfile = os.path.join(curr_dir, CONFIG_FILENAME)
-        config.read(initfile)
-        client = config.get('SETTINGS', 'CLIENT')
-        database_name = config.get('SETTINGS', 'DATABASE_NAME')
-        return client, database_name
-    except Exception as e:
-        print(e)
-
-if __name__ == '__main__':
-    client, database = read_config_file()
-    protocol = BankServerProtocol(client, database)
-    bank_server = MultiThreadedServer(ip='192.168.1.5', protocol=protocol)
-    bank_server.listen()
+            return DEPOSITION_FAILURE_ERR
