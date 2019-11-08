@@ -3,48 +3,12 @@ import random
 import pymongo
 from return_messages import *
 from constants import *
-from SocketLib.server import ServerProtocol
 
-class BankServerProtocol(ServerProtocol):
+class BankServer():
 
     def __init__(self, client, database):
         self.client = pymongo.MongoClient(client)
         self.db = self.client.get_database(database)
-
-    def process_request(self, input_msg):
-        print('Received message from client: ', input_msg)
-        arr = input_msg.split()
-        result = self.perform_action(arr)
-        return str(result)
-        
-    def perform_action(self, arr):
-
-        username = arr[0]   # String we get according to protocol: <USERNAME> <PIN> <ACTION> ...
-        pin = int(arr[1])
-        action = arr[2]
-
-        customer = self.authenticate(username, pin)
-        if customer is not None:
-
-            if action == 'WITHDRAW':
-                amount = arr[3]
-                return self.withdraw(customer['cid'], float(amount))
-                
-            elif action == 'DEPOSIT':
-                amount = arr[3]
-                return self.deposit(customer['cid'], float(amount))
-            
-            elif action == 'CHANGE_PIN':
-                new_pin = int(arr[3])
-                return self.change_customer_pin(customer['cid'], new_pin)
-
-            elif action == 'GET_BALANCE':
-                return self.get_customer_balance(customer['cid'])
-
-            else:
-                return ACTION_NOT_FOUND
-
-        return WRONG_CREDENTIALS
 
     def authenticate(self, username, pin):
         '''
@@ -57,8 +21,8 @@ class BankServerProtocol(ServerProtocol):
         if customer is not None:
             r_pin = customer['pin']    # Get pin from database
             if r_pin == pin:
-                return customer
-        return None
+                return customer['cid']
+        return WRONG_CREDENTIALS
 
     def find_customer(self, username):
         '''
