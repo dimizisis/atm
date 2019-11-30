@@ -39,6 +39,10 @@ class Ui_MainWindow(object):
         self.MainWindow = MainWindow
         self.MainWindow.setObjectName("MainWindow")
         self.MainWindow.resize(958, 669)
+
+        self.action = None  # we want to know what action the user is going to perform
+        self.curr_screen = 0    # initial screen is 0
+
         font = QtGui.QFont()
         font.setFamily("Calibri")
         font.setPointSize(12)
@@ -72,10 +76,10 @@ class Ui_MainWindow(object):
         self.balance_btn = QtWidgets.QPushButton(self.gridLayoutWidget)
         self.balance_btn.setObjectName("balance_btn")
         self.balance_btn.setStyleSheet(BTN_STYLESHEET)
-        self.change_pin_btn.clicked.connect(self.create_pin_enter_screen)
-        self.deposit_btn.clicked.connect(self.create_pin_enter_screen)
-        self.balance_btn.clicked.connect(self.create_pin_enter_screen)
-        self.withdraw_btn.clicked.connect(self.create_pin_enter_screen)
+        self.change_pin_btn.clicked.connect(self.create_pin_entry_screen)
+        self.deposit_btn.clicked.connect(self.create_pin_entry_screen)
+        self.balance_btn.clicked.connect(self.create_pin_entry_screen)
+        self.withdraw_btn.clicked.connect(self.create_pin_entry_screen)
         self.gridLayout.addWidget(self.balance_btn, 0, 2, 1, 1)
         spacerItem = QtWidgets.QSpacerItem(100, 10, QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 0, 1, 1, 1)
@@ -152,7 +156,7 @@ class Ui_MainWindow(object):
         self.clear_btn.setGeometry(QtCore.QRect(280, 10, 61, 61))
         self.clear_btn.setStyleSheet("background-color: rgb(207, 207, 0);")
         self.clear_btn.setObjectName("clear_btn")
-        self.clear_btn.clicked.connect(self.clear_pin)
+        self.clear_btn.clicked.connect(self.clear_operation)
         self.ok_btn = QtWidgets.QPushButton(self.keys_panel)
         self.ok_btn.setGeometry(QtCore.QRect(280, 150, 61, 61))
         self.ok_btn.setStyleSheet("background-color: rgb(0, 170, 0);")
@@ -194,18 +198,26 @@ class Ui_MainWindow(object):
         '''
         When the animation is clicked, show main menu
         '''
-        self.movie_lbl.hide()
+        self.movie_lbl.setParent(None)
+        self.curr_screen = 1    # menu screen is 1
 
-    def create_pin_enter_screen(self):
+    def create_pin_entry_screen(self):
         '''
         When user chooses to proceed with an operation,
-        create & show the pin enter screen
+        create & show the pin enter screen (screen 2)
         '''
-        self.balance_btn.hide()
-        self.withdraw_btn.hide()
-        self.deposit_btn.hide()
-        self.change_pin_btn.hide()
+
+        self.curr_screen = 2    # pin entry screen is 2
+
+        self.action = self.MainWindow.sender().text().upper()
+
+        self.balance_btn.setParent(None)
+        self.withdraw_btn.setParent(None)
+        self.deposit_btn.setParent(None)
+        self.change_pin_btn.setParent(None)
         self.pin_lineedit = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.pin_lineedit.setReadOnly(True)
+        self.pin_lineedit.textChanged.connect(self.on_pin_text_changed)
         self.pin_lineedit.setMaximumSize(QtCore.QSize(210, 20))
         self.pin_lineedit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.pin_lineedit.setInputMethodHints(QtCore.Qt.ImhMultiLine)
@@ -223,6 +235,78 @@ class Ui_MainWindow(object):
         self.enter_pin_lbl.setStyleSheet("color: rgb(255, 255, 255);")
         self.enter_pin_lbl.setObjectName("enter_pin_lbl")
 
+        if self.action == 'WITHDRAWAL' or self.action == 'DEPOSITION': self.ok_btn.clicked.connect(self.create_amount_entry_screen)
+        elif self.action == 'CHANGE PIN': self.ok_btn.clicked.connect(self.create_new_pin_enter_screen)
+        # else: self.ok_btn.clicked.connect()
+
+    def create_new_pin_enter_screen(self):
+        '''
+        If user chooses to change pin,
+        create & show the new pin enter screen
+        '''
+
+        self.curr_screen = 4    # create new pin screen is 4
+
+        try:
+            self.gridLayout.removeWidget(self.pin_lineedit) # deleting previous screen's widgets
+            self.gridLayout.removeWidget(self.enter_pin_lbl)
+
+            self.enter_new_pin_lbl = self.enter_pin_lbl
+            self.new_pin_lineedit = self.pin_lineedit
+
+            self.enter_new_pin_lbl.setMaximumSize(QtCore.QSize(250, 30))
+            self.new_pin_lineedit.setMaximumSize(QtCore.QSize(250, 20))
+            self.enter_new_pin_lbl.setText("Please enter your new pin")
+            self.new_pin_lineedit.clear()
+
+            self.gridLayout.addWidget(self.enter_new_pin_lbl, 0, 1, 1, 1)
+            self.gridLayout.addWidget(self.new_pin_lineedit, 1, 1, 1, 1)
+        except Exception as e:
+            print(e)
+
+    def create_amount_entry_screen(self):
+        '''
+        If the action is deposition or withdrawal,
+        the enter amount screen is showed to user
+        '''
+        self.curr_screen = 3    # amount entry screen is 3
+        try:
+            self.gridLayout.removeWidget(self.pin_lineedit) # deleting previous screen's widgets
+            self.gridLayout.removeWidget(self.enter_pin_lbl)
+
+            self.enter_amount_lbl = self.enter_pin_lbl
+            self.amount_lineedit = self.pin_lineedit
+
+            self.gridLayout.addWidget(self.enter_amount_lbl, 0, 1, 1, 1)
+            self.gridLayout.addWidget(self.amount_lineedit, 1, 1, 1, 1)
+
+            self.enter_amount_lbl.setMaximumSize(QtCore.QSize(240, 30))
+            self.enter_amount_lbl.setText("Please enter an amount")
+            self.amount_lineedit.disconnect()
+            self.amount_lineedit.setMaximumSize(QtCore.QSize(220, 20))
+            self.amount_lineedit.setEchoMode(QtWidgets.QLineEdit.Normal)
+            self.amount_lineedit.clear()
+
+        except Exception as e:
+            print(e)
+
+    def on_pin_text_changed(self):
+        '''
+        We ensure that the user wont enter a pin whose
+        length is more that 4 digits
+        '''
+        try:
+            if len(self.pin_lineedit.text()) > 4:
+                self.pin_lineedit.setText(self.pin_lineedit.text()[:-1])
+        except Exception as e:
+            print(e)
+
+    def okay_pressed(self):
+        '''
+        After ok pressed
+        '''
+        self.pin = self.pin_lineedit.text()
+
     def type_num(self, key):
         '''
         When a key is pressed, fill qlineEdit with appropriate num
@@ -231,17 +315,22 @@ class Ui_MainWindow(object):
             tmp_str = self.pin_lineedit.text()
             tmp_str += ''.join(i for i in key.text() if i.isdigit())
             self.pin_lineedit.setText(tmp_str)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
-    def clear_pin(self):
+    def clear_operation(self):
         '''
         When clear btn is clicked, clear the qlineEdit
         '''
         try:
-            self.pin_lineedit.clear()
-        except:
-            pass
+            if self.curr_screen == 2:
+                self.pin_lineedit.clear()
+            elif self.curr_screen == 3:
+                self.amount_lineedit.clear()
+            elif self.curr_screen == 4:
+                self.new_pin_lineedit.clear()
+        except Exception as e:
+            print(e)
     
     def cancel_operation(self):
         '''
@@ -249,8 +338,8 @@ class Ui_MainWindow(object):
         '''
         try:
             self.setupUi(self.MainWindow)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
