@@ -4,7 +4,7 @@
 This is an ATM implementation (ATM is the client, bank is the server), using multiple connection types (web-services,
 RPC, MOM etc)
 
-![alt text](https://imgur.com/jnouuEE)
+![alt text](https://i.imgur.com/jnouuEE.png)
 
 ### Prerequisites
 
