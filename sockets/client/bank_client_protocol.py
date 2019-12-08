@@ -23,3 +23,4 @@ class BankClientProtocol(ClientProtocol):
 
     def process_reply(self, input_msg):
         print('Response: ', input_msg)
+        return input_msg

@@ -4,33 +4,41 @@ from abc import ABCMeta, abstractmethod
 
 class Client:
 
-    def __init__(self, host='localhost', port=1234, protocol=None):
+    def __init__(self, host='localhost', port=8000, protocol=None):
         self.protocol = protocol
         self.host = host
         self.port = port
         self.data_socket = socket.socket()
+        self.data_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.data_socket.connect((self.host, self.port))
 
     def open(self):
 
-        # Prepare request, according to client's protocol
-        out_msg = self.protocol.prepare_request()
+        try:
 
-        # Send request encoded
-        self.data_socket.send(out_msg.encode())
+            # Prepare request, according to client's protocol
+            out_msg = self.protocol.prepare_request()
 
-        # Receive message from server
-        input_msg = self.data_socket.recv(1024)
+            # Send request encoded
+            self.data_socket.send(out_msg.encode())
 
-        # Get server's message in right format
-        input_msg = input_msg.decode('UTF-8')  # convert to string
-        input_msg = input_msg.replace('\n', '')  # remove newline character
+            # Receive message from server
+            input_msg = self.data_socket.recv(1024)
 
-        # Process reply, according to client's protocol
-        self.protocol.process_reply(input_msg)
+            # Get server's message in right format
+            input_msg = input_msg.decode('UTF-8')  # convert to string
+            input_msg = input_msg.replace('\n', '')  # remove newline character
 
-        # Close the connection with server
-        self.data_socket.close()
+            # Process reply, according to client's protocol
+            response = self.protocol.process_reply(input_msg)
+
+            # Close the connection with server
+            self.data_socket.close()
+
+            return response
+
+        except:
+            self.data_socket.close()
 
 class ClientProtocol:
     __metaclass__ = ABCMeta

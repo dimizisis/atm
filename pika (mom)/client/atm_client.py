@@ -2,9 +2,17 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+from PyQt5.QtGui import QKeySequence
+
+from bank_client_rpc import BankClient
+
 KEYS_STYLESHEET = 'background-color: rgb(206, 206, 206);'
 
 BTN_STYLESHEET = "QPushButton\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(120,120,120), stop: 1 rgb(80,80,80));\n  border: 1px solid rgb(20,20,20);\n  color: rgb(230,230,230);\n  padding: 4px 8px;\n}\nQPushButton:hover\n{\n  background-color: rgb(70,110,130);\n}\nQPushButton:pressed\n{\n  border-color: rgb(90,200,255);\n  padding: 1px -1px -1px 1px;\n}\nQPushButton:checked\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(40,150,200), stop: 1 rgb(90,200,255));\n  color: rgb(20,20,20);\n}\n\nQPushButton:checked:hover\n{\n  background-color: rgb(70,110,130);\n}\nQPushButton:disabled\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(160,160,160), stop: 1 rgb(120,120,120));\n  border-color: rgb(60,60,60);\n  color: rgb(40,40,40);\n}"
+
+FAILED_TO_CONNECT = 'Failed to connect to the server. Please try again later.'
+
+ACTIONS = {'WITHDRAWAL': 'WITHDRAW', 'DEPOSITION': 'DEPOSIT', 'CHANGE PIN': 'CHANGE_PIN', 'BALANCE INQUIRY':'GET_BALANCE'}
 
 class NumButton(QtWidgets.QPushButton):
 
@@ -35,12 +43,18 @@ class CustomQLabel(QtWidgets.QLabel):
         self.clicked.emit()
 
 class Ui_MainWindow(object):
+    def __init__(self):
+        self.username = None
+        self.pin = None
+        self.action = None  # we want to know what action the user is going to perform
+        self.new_pin = None
+        self.amount = None
+
     def setupUi(self, MainWindow):
         self.MainWindow = MainWindow
         self.MainWindow.setObjectName("MainWindow")
         self.MainWindow.resize(958, 669)
 
-        self.action = None  # we want to know what action the user is going to perform
         self.curr_screen = 0    # initial screen is 0
 
         font = QtGui.QFont()
@@ -76,10 +90,10 @@ class Ui_MainWindow(object):
         self.balance_btn = QtWidgets.QPushButton(self.gridLayoutWidget)
         self.balance_btn.setObjectName("balance_btn")
         self.balance_btn.setStyleSheet(BTN_STYLESHEET)
-        self.change_pin_btn.clicked.connect(self.create_pin_entry_screen)
-        self.deposit_btn.clicked.connect(self.create_pin_entry_screen)
-        self.balance_btn.clicked.connect(self.create_pin_entry_screen)
-        self.withdraw_btn.clicked.connect(self.create_pin_entry_screen)
+        self.change_pin_btn.clicked.connect(self.create_username_entry_screen)
+        self.deposit_btn.clicked.connect(self.create_username_entry_screen)
+        self.balance_btn.clicked.connect(self.create_username_entry_screen)
+        self.withdraw_btn.clicked.connect(self.create_username_entry_screen)
         self.gridLayout.addWidget(self.balance_btn, 0, 2, 1, 1)
         spacerItem = QtWidgets.QSpacerItem(100, 10, QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 0, 1, 1, 1)
@@ -161,6 +175,9 @@ class Ui_MainWindow(object):
         self.ok_btn.setGeometry(QtCore.QRect(280, 150, 61, 61))
         self.ok_btn.setStyleSheet("background-color: rgb(0, 170, 0);")
         self.ok_btn.setObjectName("ok_btn")
+        self.ok_btn.clicked.connect(self.okay_pressed)
+        self.actionPressOk = QtWidgets.QShortcut(QKeySequence("Return"), MainWindow)
+        self.actionPressOk.activated.connect(self.okay_pressed)
         self.cancel_btn = QtWidgets.QPushButton(self.keys_panel)
         self.cancel_btn.setGeometry(QtCore.QRect(280, 80, 61, 61))
         self.cancel_btn.setStyleSheet("background-color: rgb(170, 0, 0);")
@@ -201,7 +218,7 @@ class Ui_MainWindow(object):
         self.movie_lbl.setParent(None)
         self.curr_screen = 1    # menu screen is 1
 
-    def create_pin_entry_screen(self):
+    def create_username_entry_screen(self):
         '''
         When user chooses to proceed with an operation,
         create & show the pin enter screen (screen 2)
@@ -209,35 +226,49 @@ class Ui_MainWindow(object):
 
         self.curr_screen = 2    # pin entry screen is 2
 
-        self.action = self.MainWindow.sender().text().upper()
+        self.action = ACTIONS[self.MainWindow.sender().text().upper()]
 
         self.balance_btn.setParent(None)
         self.withdraw_btn.setParent(None)
         self.deposit_btn.setParent(None)
         self.change_pin_btn.setParent(None)
-        self.pin_lineedit = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.username_lineedit = QtWidgets.QLineEdit(self.gridLayoutWidget)
+        self.username_lineedit.setMaximumSize(QtCore.QSize(210, 20))
+        self.username_lineedit.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.username_lineedit.setAlignment(QtCore.Qt.AlignCenter) 
+        self.username_lineedit.setObjectName("username_lineedit")
+        self.gridLayout.addWidget(self.username_lineedit, 1, 1, 1, 1)
+        self.enter_username_lbl = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.enter_username_lbl.setMaximumSize(QtCore.QSize(210, 30))
+        self.enter_username_lbl.setText("Please enter your username")
+        self.gridLayout.addWidget(self.enter_username_lbl, 0, 1, 1, 1)
+        font = QtGui.QFont()
+        font.setPointSize(16)
+        self.enter_username_lbl.setFont(font)
+        self.enter_username_lbl.setStyleSheet("color: rgb(255, 255, 255);")
+        self.enter_username_lbl.setObjectName("enter_username_lbl")
+
+    def create_pin_entry_screen(self):
+        '''
+        When user chooses to proceed with an operation,
+        create & show the pin enter screen (screen 2)
+        '''
+
+        self.curr_screen = 3    # pin entry screen is 3
+
+        self.gridLayout.removeWidget(self.username_lineedit)
+        self.pin_lineedit = self.username_lineedit
+        self.pin_lineedit.clear()
         self.pin_lineedit.setReadOnly(True)
-        self.pin_lineedit.textChanged.connect(self.on_pin_text_changed)
-        self.pin_lineedit.setMaximumSize(QtCore.QSize(210, 20))
-        self.pin_lineedit.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.pin_lineedit.setInputMethodHints(QtCore.Qt.ImhMultiLine)
         self.pin_lineedit.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.pin_lineedit.setAlignment(QtCore.Qt.AlignCenter) 
-        self.pin_lineedit.setObjectName("pin_lineedit")
+        self.pin_lineedit.textChanged.connect(self.on_pin_text_changed)
         self.gridLayout.addWidget(self.pin_lineedit, 1, 1, 1, 1)
-        self.enter_pin_lbl = QtWidgets.QLabel(self.gridLayoutWidget)
+        self.enter_pin_lbl = self.enter_username_lbl
         self.enter_pin_lbl.setMaximumSize(QtCore.QSize(210, 30))
         self.enter_pin_lbl.setText("Please enter your pin")
         self.gridLayout.addWidget(self.enter_pin_lbl, 0, 1, 1, 1)
-        font = QtGui.QFont()
-        font.setPointSize(16)
-        self.enter_pin_lbl.setFont(font)
-        self.enter_pin_lbl.setStyleSheet("color: rgb(255, 255, 255);")
         self.enter_pin_lbl.setObjectName("enter_pin_lbl")
-
-        if self.action == 'WITHDRAWAL' or self.action == 'DEPOSITION': self.ok_btn.clicked.connect(self.create_amount_entry_screen)
-        elif self.action == 'CHANGE PIN': self.ok_btn.clicked.connect(self.create_new_pin_enter_screen)
-        # else: self.ok_btn.clicked.connect()
 
     def create_new_pin_enter_screen(self):
         '''
@@ -245,7 +276,7 @@ class Ui_MainWindow(object):
         create & show the new pin enter screen
         '''
 
-        self.curr_screen = 4    # create new pin screen is 4
+        self.curr_screen = 5    # create new pin screen is 5
 
         try:
             self.gridLayout.removeWidget(self.pin_lineedit) # deleting previous screen's widgets
@@ -269,7 +300,7 @@ class Ui_MainWindow(object):
         If the action is deposition or withdrawal,
         the enter amount screen is showed to user
         '''
-        self.curr_screen = 3    # amount entry screen is 3
+        self.curr_screen = 4    # amount entry screen is 4
         try:
             self.gridLayout.removeWidget(self.pin_lineedit) # deleting previous screen's widgets
             self.gridLayout.removeWidget(self.enter_pin_lbl)
@@ -290,6 +321,40 @@ class Ui_MainWindow(object):
         except Exception as e:
             print(e)
 
+    def create_response_screen(self, input_message):
+        '''
+        After all information is entered by user,
+        we need to create the screen, in which we will
+        show him the response of his request
+        '''
+        input_message = input_message.decode('utf-8')
+
+        prev_screen = self.curr_screen  # keep previous screen number (we need to know which items to remove dynamically from panel)
+        self.curr_screen = 6    # response screen is 5
+        try:
+            if prev_screen == 4:    # if before response we were in enter amount screen (deposition or withdrawal)
+                self.gridLayout.removeWidget(self.enter_amount_lbl) # deleting previous screen's widgets
+                self.gridLayout.removeWidget(self.amount_lineedit)
+                self.amount_lineedit.setParent(None)
+
+                self.response_lbl = self.enter_amount_lbl
+
+            else:   # if before response we were in enter pin screen
+                self.gridLayout.removeWidget(self.enter_pin_lbl) # deleting previous screen's widgets
+                self.gridLayout.removeWidget(self.pin_lineedit)
+                self.pin_lineedit.setParent(None)
+
+                self.response_lbl = self.enter_pin_lbl
+
+            self.gridLayout.addWidget(self.response_lbl, 0, 1, 1, 1)
+
+            self.response_lbl.setMaximumSize(QtCore.QSize(240, 30))
+
+            self.response_lbl.setText(input_message)
+
+        except Exception as e:
+            print(e)
+
     def on_pin_text_changed(self):
         '''
         We ensure that the user wont enter a pin whose
@@ -305,7 +370,23 @@ class Ui_MainWindow(object):
         '''
         After ok pressed
         '''
-        self.pin = self.pin_lineedit.text()
+        if self.curr_screen == 2:   # if ok pressed while we are in enter username screen
+            self.username = self.username_lineedit.text()
+            self.create_pin_entry_screen()
+        elif self.curr_screen == 3: # if ok pressed while we are in enter pin screen
+            self.pin = self.pin_lineedit.text()
+            if self.action == 'DEPOSIT' or self.action == 'WITHDRAW':
+                self.create_amount_entry_screen()
+            elif self.action == 'CHANGE_PIN':
+                self.create_new_pin_enter_screen()
+            elif self.action == 'GET_BALANCE':
+                self.establish_connection()
+        elif self.curr_screen == 4:    # if ok pressed while we are in enter amount screen or enter new pin screen
+            self.amount = self.amount_lineedit.text()
+            self.establish_connection()
+        elif self.curr_screen == 5:
+            self.new_pin = self.new_pin_lineedit.text()
+            self.establish_connection()
 
     def type_num(self, key):
         '''
@@ -324,10 +405,12 @@ class Ui_MainWindow(object):
         '''
         try:
             if self.curr_screen == 2:
-                self.pin_lineedit.clear()
+                self.username_lineedit.clear()
             elif self.curr_screen == 3:
-                self.amount_lineedit.clear()
+                self.pin_lineedit.clear()
             elif self.curr_screen == 4:
+                self.amount_lineedit.clear()
+            elif self.curr_screen == 5:
                 self.new_pin_lineedit.clear()
         except Exception as e:
             print(e)
@@ -353,7 +436,7 @@ class Ui_MainWindow(object):
         self.num3_btn.setText(_translate("MainWindow", "3"))
         self.num9_btn.setText(_translate("MainWindow", "9"))
         self.num6_btn.setText(_translate("MainWindow", "6"))
-        self.balance_btn.setText(_translate("MainWindow", "Balance Enquiry"))
+        self.balance_btn.setText(_translate("MainWindow", "Balance Inquiry"))
         self.withdraw_btn.setText(_translate("MainWindow", "Withdrawal"))
         self.deposit_btn.setText(_translate("MainWindow", "Deposition"))
         self.change_pin_btn.setText(_translate("MainWindow", "Change Pin"))
@@ -362,6 +445,18 @@ class Ui_MainWindow(object):
         self.cancel_btn.setText(_translate("MainWindow", "CANCEL"))
         self.num0_btn.setText(_translate("MainWindow", "0"))
 
+    def establish_connection(self):
+        
+        try:
+            bank_client = BankClient()
+            request = self.username + ' ' + self.pin + ' ' + self.action + (' ' + self.amount if self.amount is not None else '') + (self.new_pin if self.new_pin is not None else '')
+            response = bank_client.call(request)
+        except Exception as e:
+            print(e)
+            response = FAILED_TO_CONNECT
+
+        self.create_response_screen(response)
+            
 if __name__ == '__main__':
 
     import sys

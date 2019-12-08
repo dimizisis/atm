@@ -33,7 +33,7 @@ def get_balance_charges():
         config.read(initfile)
         charges_amount = config.get('CHARGES', 'BALANCE_INFO_CHARGES')
         charges_descr = config.get('CHARGES', 'BALANCE_INFO_CHARGES_DESCR')
-        return charges_amount, charges_descr
+        return float(charges_amount), charges_descr
     except Exception as e:
         print(e)
 
@@ -48,6 +48,6 @@ def get_withdrawal_limit():
         initfile = os.path.join(curr_dir, CONFIG_FILENAME)
         config.read(initfile)
         withdrawal_limit = config.get('LIMITATIONS', 'DAILY_WITHDRAWAL_LIMIT')
-        return withdrawal_limit
+        return int(withdrawal_limit)
     except Exception as e:
         print(e)

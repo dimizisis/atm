@@ -5,6 +5,7 @@ from flask_restful import abort
 from math import log10
 import configparser
 import os
+import return_messages
 from config_functions import get_balance_charges, get_withdrawal_limit
 
 # CONFIGURATION FILENAME
@@ -41,7 +42,7 @@ def get_customer_balance(cid):
         return balance['balance'], balance['last_updated']
     except:
         print('BALANCE_NOT_FOUND_ERR')
-        abort(404, message='BALANCE_NOT_FOUND_ERR')
+        abort(404, message=BALANCE_NOT_FOUND_ERR)
         
     return None, None
 
@@ -70,19 +71,19 @@ def withdraw(cid, amount):
 
     if amount <= 0:
         print('AMOUNT_NOT_VALID_ERR')
-        abort(403, message='AMOUNT_NOT_VALID_ERR')
+        abort(403, message=AMOUNT_NOT_VALID_ERR)
 
     if bank_api.mongo.db.balance.find_one({'cid': cid}, {'balance': 1})['balance'] < amount:
         print('BALANCE_NOT_ENOUGH_ERR')
-        abort(403, message='BALANCE_NOT_ENOUGH_ERR')
+        abort(403, message=BALANCE_NOT_ENOUGH_ERR)
         
     if not check_banknotes(amount):
         print('BANKNOTES_NOT_VALID_ERR')
-        abort(403, message='BANKNOTES_NOT_VALID_ERR')
+        abort(403, message=BANKNOTES_NOT_VALID_ERR)
 
     if daily_withdrawal_limit_reached(cid, amount):
         print('DAILY_WITHDRAWAL_LIMIT_ERR')
-        abort(403, message='DAILY_WITHDRAWAL_LIMIT_ERR')
+        abort(403, message=DAILY_WITHDRAWAL_LIMIT_ERR)
 
     try:
         withdrawal_doc = {'wid': bank_api.mongo.db.withdraw.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
@@ -94,7 +95,7 @@ def withdraw(cid, amount):
         return curr_balance
     except:
         print('WITHDRAWAL_FAILURE_ERR')
-        abort(400, message='WITHDRAWAL_FAILURE_ERR')
+        abort(400, message=WITHDRAWAL_FAILURE_ERR)
 
 def daily_withdrawal_limit_reached(cid, amount):
     '''
@@ -132,7 +133,7 @@ def deposit(cid, amount):
         
     if amount <= 0:
         print('AMOUNT_NOT_VALID_ERR')
-        abort(403, message='AMOUNT_NOT_VALID_ERR')
+        abort(403, message=AMOUNT_NOT_VALID_ERR)
 
     try:
         deposition_doc = {'did': bank_api.mongo.db.deposit.count_documents({})+1, 'amount': amount, 'cid': cid, 'time': datetime.today().strftime('%Y-%m-%d-%H:%M:%S')}
@@ -144,7 +145,7 @@ def deposit(cid, amount):
         return curr_balance
     except:
         print('DEPOSITION_FAILURE_ERR')
-        abort(400, message='DEPOSITION_FAILURE_ERR')
+        abort(400, message=DEPOSITION_FAILURE_ERR)
 
 def change_customer_pin(cid, new_pin):
     '''

@@ -24,7 +24,7 @@ def read_config_file():
 
 def start_name_server():
     import subprocess
-    subprocess.run(["python", "-m", "Pyro4.naming"])    # executing python -m Pyro4.naming (command line) in order to start our name server
+    os.popen('python -m Pyro4.naming') # executing python -m Pyro4.naming (command line) in order to start our name server
 
 if __name__ == '__main__':
     client, database = read_config_file()
@@ -34,6 +34,6 @@ if __name__ == '__main__':
     daemon = Pyro4.Daemon()                # make a Pyro daemon
     ns = Pyro4.locateNS()                  # find the name server
     uri = daemon.register(BankServer(client, database))   # register the greeting maker as a Pyro object
-    ns.register("bank_server", uri)   # register the object with a name in the name server
+    ns.register('bank_server', uri)   # register the object with a name in the name server
 
     daemon.requestLoop()                   # start the event loop of the server to wait for calls

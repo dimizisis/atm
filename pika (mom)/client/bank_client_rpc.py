@@ -37,9 +37,3 @@ class BankClient(object):
         while self.response is None:
             self.connection.process_data_events()
         return self.response
-
-if __name__ == '__main__':
-
-    bank_client = BankClient()
-    response = bank_client.call(' '.join(sys.argv[1:]))     # send the parameters as they are
-    print(response.decode('UTF-8')) # we add decode to avoid printing 'b' character

@@ -24,7 +24,7 @@ class BankClient():
 
         if not success:
             print(return_val)
-            exit(1)
+            return return_val
         
         if self.action == 'WITHDRAW':
             response = self.server.withdraw(self.cid, self.amount) 
