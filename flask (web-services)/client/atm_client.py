@@ -6,6 +6,8 @@ from PyQt5.QtGui import QKeySequence
 
 import requests
 
+import os
+
 KEYS_STYLESHEET = 'background-color: rgb(206, 206, 206);'
 
 BTN_STYLESHEET = "QPushButton\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(120,120,120), stop: 1 rgb(80,80,80));\n  border: 1px solid rgb(20,20,20);\n  color: rgb(230,230,230);\n  padding: 4px 8px;\n}\nQPushButton:hover\n{\n  background-color: rgb(70,110,130);\n}\nQPushButton:pressed\n{\n  border-color: rgb(90,200,255);\n  padding: 1px -1px -1px 1px;\n}\nQPushButton:checked\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(40,150,200), stop: 1 rgb(90,200,255));\n  color: rgb(20,20,20);\n}\n\nQPushButton:checked:hover\n{\n  background-color: rgb(70,110,130);\n}\nQPushButton:disabled\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(160,160,160), stop: 1 rgb(120,120,120));\n  border-color: rgb(60,60,60);\n  color: rgb(40,40,40);\n}"
@@ -14,6 +16,16 @@ FAILED_TO_CONNECT = 'Failed to connect to the server. Please try again later.'
 
 ACTIONS = {'WITHDRAWAL': 'WITHDRAW', 'DEPOSITION': 'DEPOSIT', 'CHANGE PIN': 'CHANGE_PIN', 'BALANCE INQUIRY':'GET_BALANCE'}
 
+def beep():
+    '''
+    Creates a beep sound
+    '''
+    if os.name == 'nt':
+        import winsound
+        winsound.Beep(400, 250)
+    else:
+        sys.stdout.write("\a")
+
 class NumButton(QtWidgets.QPushButton):
 
     '''
@@ -21,20 +33,21 @@ class NumButton(QtWidgets.QPushButton):
     We created this class to add num_signal
     '''
 
+    stylesheet = 'QPushButton:checked{\n         background-color: green\n}'
+
     num_signal = QtCore.pyqtSignal(QtWidgets.QPushButton)
     def __init__(self, parent=None):
         super(NumButton, self).__init__(parent)
 
     def mousePressEvent(self, event):
+        beep()
         self.clicked.emit(True)
         self.num_signal.emit(self)
-        
-class CustomQLabel(QtWidgets.QLabel):
 
+class CustomQLabel(QtWidgets.QLabel):
     '''
     Custom QLabel class with mouse press event
     '''
-
     clicked=QtCore.pyqtSignal()
     def __init__(self, parent=None):
         QtWidgets.QLabel.__init__(self, parent)
@@ -65,7 +78,7 @@ class Ui_MainWindow(object):
         self.screen_panel = QtWidgets.QFrame(self.centralwidget)
         self.screen_panel.setGeometry(QtCore.QRect(250, 10, 400, 300))
         self.screen_panel.setAutoFillBackground(False)
-        self.screen_panel.setStyleSheet("background-color: rgb(0, 145, 0);")
+        self.screen_panel.setStyleSheet("background-color: rgb(0, 177, 51);")
         self.screen_panel.setFrameShape(QtWidgets.QFrame.Panel)
         self.screen_panel.setFrameShadow(QtWidgets.QFrame.Raised)
         self.screen_panel.setObjectName("screen_panel")
@@ -171,11 +184,13 @@ class Ui_MainWindow(object):
         self.clear_btn.setStyleSheet("background-color: rgb(207, 207, 0);")
         self.clear_btn.setObjectName("clear_btn")
         self.clear_btn.clicked.connect(self.clear_operation)
+        self.clear_btn.clicked.connect(beep)
         self.ok_btn = QtWidgets.QPushButton(self.keys_panel)
         self.ok_btn.setGeometry(QtCore.QRect(280, 150, 61, 61))
         self.ok_btn.setStyleSheet("background-color: rgb(0, 170, 0);")
         self.ok_btn.setObjectName("ok_btn")
         self.ok_btn.clicked.connect(self.okay_pressed)
+        self.ok_btn.clicked.connect(beep)
         self.actionPressOk = QtWidgets.QShortcut(QKeySequence("Return"), MainWindow)
         self.actionPressOk.activated.connect(self.okay_pressed)
         self.cancel_btn = QtWidgets.QPushButton(self.keys_panel)
@@ -183,6 +198,7 @@ class Ui_MainWindow(object):
         self.cancel_btn.setStyleSheet("background-color: rgb(170, 0, 0);")
         self.cancel_btn.setObjectName("cancel_btn")
         self.cancel_btn.clicked.connect(self.cancel_operation)
+        self.cancel_btn.clicked.connect(beep)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 958, 21))
