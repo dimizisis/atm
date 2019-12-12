@@ -7,6 +7,7 @@ from PyQt5.QtGui import QKeySequence
 from bank_client_rpc import BankClient
 
 import os
+#MyQPushButton
 
 KEYS_STYLESHEET = 'background-color: rgb(206, 206, 206);'
 
@@ -33,11 +34,10 @@ class NumButton(QtWidgets.QPushButton):
     We created this class to add num_signal
     '''
 
-    stylesheet = 'QPushButton:checked{\n         background-color: green\n}'
-
     num_signal = QtCore.pyqtSignal(QtWidgets.QPushButton)
     def __init__(self, parent=None):
         super(NumButton, self).__init__(parent)
+        self.setCheckable(True)
 
     def mousePressEvent(self, event):
         beep()
@@ -107,6 +107,10 @@ class Ui_MainWindow(object):
         self.deposit_btn.clicked.connect(self.create_username_entry_screen)
         self.balance_btn.clicked.connect(self.create_username_entry_screen)
         self.withdraw_btn.clicked.connect(self.create_username_entry_screen)
+        self.change_pin_btn.clicked.connect(beep)
+        self.deposit_btn.clicked.connect(beep)
+        self.balance_btn.clicked.connect(beep)
+        self.withdraw_btn.clicked.connect(beep)
         self.gridLayout.addWidget(self.balance_btn, 0, 2, 1, 1)
         spacerItem = QtWidgets.QSpacerItem(100, 10, QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 0, 1, 1, 1)
