@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from PyQt5.QtGui import QKeySequence
-
 import requests
-
 import os
+from bank_client import BankClient
 
 KEYS_STYLESHEET = 'background-color: rgb(206, 206, 206);'
 
-BTN_STYLESHEET = "QPushButton\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(120,120,120), stop: 1 rgb(80,80,80));\n  border: 1px solid rgb(20,20,20);\n  color: rgb(230,230,230);\n  padding: 4px 8px;\n}\nQPushButton:hover\n{\n  background-color: rgb(70,110,130);\n}\nQPushButton:pressed\n{\n  border-color: rgb(90,200,255);\n  padding: 1px -1px -1px 1px;\n}\nQPushButton:checked\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(40,150,200), stop: 1 rgb(90,200,255));\n  color: rgb(20,20,20);\n}\n\nQPushButton:checked:hover\n{\n  background-color: rgb(70,110,130);\n}\nQPushButton:disabled\n{\n  background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\n                                    stop: 0 rgb(160,160,160), stop: 1 rgb(120,120,120));\n  border-color: rgb(60,60,60);\n  color: rgb(40,40,40);\n}"
-
-FAILED_TO_CONNECT = 'Failed to connect to the server. Please try again later.'
+BTN_STYLESHEET = 'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(120,120,120), stop: 1 rgb(80,80,80)); border: 1px solid rgb(20,20,20); color: rgb(230,230,230); padding: 4px 8px;} QPushButton:hover {background-color: rgb(70,110,130);} QPushButton:pressed {border-color: rgb(90,200,255); padding: 1px -1px -1px 1px; } QPushButton:checked {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(40,150,200), stop: 1 rgb(90,200,255)); color: rgb(20,20,20);} QPushButton:checked:hover { background-color: rgb(70,110,130);} QPushButton:disabled {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(160,160,160), stop: 1 rgb(120,120,120)); border-color: rgb(60,60,60); color: rgb(40,40,40);}'
 
 ACTIONS = {'WITHDRAWAL': 'WITHDRAW', 'DEPOSITION': 'DEPOSIT', 'CHANGE PIN': 'CHANGE_PIN', 'BALANCE INQUIRY':'GET_BALANCE'}
 
@@ -24,7 +20,7 @@ def beep():
         import winsound
         winsound.Beep(400, 250)
     else:
-        sys.stdout.write("\a")
+        sys.stdout.write('\a')
 
 class NumButton(QtWidgets.QPushButton):
 
@@ -32,8 +28,6 @@ class NumButton(QtWidgets.QPushButton):
     Custom class for num keys
     We created this class to add num_signal
     '''
-
-    stylesheet = 'QPushButton:checked{\n         background-color: green\n}'
 
     num_signal = QtCore.pyqtSignal(QtWidgets.QPushButton)
     def __init__(self, parent=None):
@@ -70,9 +64,10 @@ class Ui_MainWindow(object):
 
         self.curr_screen = 0    # initial screen is 0
 
-        font = QtGui.QFont()
-        font.setFamily("Calibri")
-        font.setPointSize(12)
+        self.font = QtGui.QFont()
+        self.font.setFamily("Calibri")
+        self.font.setPointSize(12)
+
         self.centralwidget = QtWidgets.QWidget(self.MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.screen_panel = QtWidgets.QFrame(self.centralwidget)
@@ -114,7 +109,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.balance_btn, 0, 2, 1, 1)
         spacerItem = QtWidgets.QSpacerItem(100, 10, QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 0, 1, 1, 1)
-        self.movie = QtGui.QMovie('C:/Users/Dimitris/Desktop/atm.gif')
+        self.movie = QtGui.QMovie(os.path.dirname(os.path.realpath(__file__))+'\images\\atm.gif')
         self.movie.setCacheMode(QtGui.QMovie.CacheAll)
         self.movie_lbl = CustomQLabel(self.centralwidget)
         self.movie_lbl.setGeometry(self.screen_panel.geometry())
@@ -129,58 +124,8 @@ class Ui_MainWindow(object):
         self.keys_panel.setFrameShape(QtWidgets.QFrame.Panel)
         self.keys_panel.setFrameShadow(QtWidgets.QFrame.Raised)
         self.keys_panel.setObjectName("keys_panel")
-        self.num1_btn = NumButton(self.keys_panel)
-        self.num1_btn.setGeometry(QtCore.QRect(10, 10, 61, 61))
-        self.num1_btn.setFont(font)
-        self.num1_btn.setAutoFillBackground(False)
-        self.num1_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num1_btn.setObjectName("num1_btn")
-        self.num4_btn = NumButton(self.keys_panel)
-        self.num4_btn.setGeometry(QtCore.QRect(10, 80, 61, 61))
-        self.num4_btn.setFont(font)
-        self.num4_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num4_btn.setObjectName("num4_btn")
-        self.num7_btn = NumButton(self.keys_panel)
-        self.num7_btn.setGeometry(QtCore.QRect(10, 150, 61, 61))
-        self.num7_btn.setFont(font)
-        self.num7_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num7_btn.setObjectName("num7_btn")
-        self.num2_btn = NumButton(self.keys_panel)
-        self.num2_btn.setGeometry(QtCore.QRect(100, 10, 61, 61))
-        self.num2_btn.setFont(font)
-        self.num2_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num2_btn.setObjectName("num2_btn")
-        self.num8_btn = NumButton(self.keys_panel)
-        self.num8_btn.setGeometry(QtCore.QRect(100, 150, 61, 61))
-        self.num8_btn.setFont(font)
-        self.num8_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num8_btn.setObjectName("num8_btn")
-        self.num5_btn = NumButton(self.keys_panel)
-        self.num5_btn.setGeometry(QtCore.QRect(100, 80, 61, 61))
-        self.num5_btn.setFont(font)
-        self.num5_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num5_btn.setObjectName("num5_btn")
-        self.num3_btn = NumButton(self.keys_panel)
-        self.num3_btn.setGeometry(QtCore.QRect(190, 10, 61, 61))
-        self.num3_btn.setFont(font)
-        self.num3_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num3_btn.setObjectName("num3_btn")
-        self.num9_btn = NumButton(self.keys_panel)
-        self.num9_btn.setGeometry(QtCore.QRect(190, 150, 61, 61))
-        self.num9_btn.setFont(font)
-        self.num9_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num9_btn.setObjectName("num9_btn")
-        self.num6_btn = NumButton(self.keys_panel)
-        self.num6_btn.setGeometry(QtCore.QRect(190, 80, 61, 61))
-        self.num6_btn.setFont(font)
-        self.num6_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num6_btn.setObjectName("num6_btn")
-        self.num0_btn = NumButton(self.keys_panel)
-        self.num0_btn.setGeometry(QtCore.QRect(100, 220, 61, 61))
-        self.num0_btn.setFont(font)
-        self.num0_btn.setStyleSheet(KEYS_STYLESHEET)
-        self.num0_btn.setObjectName("num0_btn")
 
+        self.init_numbtns()
         self.set_num_key_slots()
 
         self.clear_btn = QtWidgets.QPushButton(self.keys_panel)
@@ -193,8 +138,8 @@ class Ui_MainWindow(object):
         self.ok_btn.setGeometry(QtCore.QRect(280, 150, 61, 61))
         self.ok_btn.setStyleSheet("background-color: rgb(0, 170, 0);")
         self.ok_btn.setObjectName("ok_btn")
-        self.ok_btn.clicked.connect(self.okay_pressed)
         self.ok_btn.clicked.connect(beep)
+        self.ok_btn.clicked.connect(self.okay_pressed)
         self.actionPressOk = QtWidgets.QShortcut(QKeySequence("Return"), MainWindow)
         self.actionPressOk.activated.connect(self.okay_pressed)
         self.cancel_btn = QtWidgets.QPushButton(self.keys_panel)
@@ -214,6 +159,59 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def init_numbtns(self):
+        self.num1_btn = NumButton(self.keys_panel)
+        self.num1_btn.setGeometry(QtCore.QRect(10, 10, 61, 61))
+        self.num1_btn.setFont(self.font)
+        self.num1_btn.setAutoFillBackground(False)
+        self.num1_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num1_btn.setObjectName("num1_btn")
+        self.num4_btn = NumButton(self.keys_panel)
+        self.num4_btn.setGeometry(QtCore.QRect(10, 80, 61, 61))
+        self.num4_btn.setFont(self.font)
+        self.num4_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num4_btn.setObjectName("num4_btn")
+        self.num7_btn = NumButton(self.keys_panel)
+        self.num7_btn.setGeometry(QtCore.QRect(10, 150, 61, 61))
+        self.num7_btn.setFont(self.font)
+        self.num7_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num7_btn.setObjectName("num7_btn")
+        self.num2_btn = NumButton(self.keys_panel)
+        self.num2_btn.setGeometry(QtCore.QRect(100, 10, 61, 61))
+        self.num2_btn.setFont(self.font)
+        self.num2_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num2_btn.setObjectName("num2_btn")
+        self.num8_btn = NumButton(self.keys_panel)
+        self.num8_btn.setGeometry(QtCore.QRect(100, 150, 61, 61))
+        self.num8_btn.setFont(self.font)
+        self.num8_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num8_btn.setObjectName("num8_btn")
+        self.num5_btn = NumButton(self.keys_panel)
+        self.num5_btn.setGeometry(QtCore.QRect(100, 80, 61, 61))
+        self.num5_btn.setFont(self.font)
+        self.num5_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num5_btn.setObjectName("num5_btn")
+        self.num3_btn = NumButton(self.keys_panel)
+        self.num3_btn.setGeometry(QtCore.QRect(190, 10, 61, 61))
+        self.num3_btn.setFont(self.font)
+        self.num3_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num3_btn.setObjectName("num3_btn")
+        self.num9_btn = NumButton(self.keys_panel)
+        self.num9_btn.setGeometry(QtCore.QRect(190, 150, 61, 61))
+        self.num9_btn.setFont(self.font)
+        self.num9_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num9_btn.setObjectName("num9_btn")
+        self.num6_btn = NumButton(self.keys_panel)
+        self.num6_btn.setGeometry(QtCore.QRect(190, 80, 61, 61))
+        self.num6_btn.setFont(self.font)
+        self.num6_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num6_btn.setObjectName("num6_btn")
+        self.num0_btn = NumButton(self.keys_panel)
+        self.num0_btn.setGeometry(QtCore.QRect(100, 220, 61, 61))
+        self.num0_btn.setFont(self.font)
+        self.num0_btn.setStyleSheet(KEYS_STYLESHEET)
+        self.num0_btn.setObjectName("num0_btn")
 
     def set_num_key_slots(self):
         '''
@@ -354,22 +352,17 @@ class Ui_MainWindow(object):
                 self.gridLayout.removeWidget(self.enter_amount_lbl) # deleting previous screen's widgets
                 self.gridLayout.removeWidget(self.amount_lineedit)
                 self.amount_lineedit.setParent(None)
-
                 self.response_lbl = self.enter_amount_lbl
 
             else:   # if before response we were in enter pin screen
                 self.gridLayout.removeWidget(self.enter_pin_lbl) # deleting previous screen's widgets
                 self.gridLayout.removeWidget(self.pin_lineedit)
                 self.pin_lineedit.setParent(None)
-
                 self.response_lbl = self.enter_pin_lbl
 
             self.gridLayout.addWidget(self.response_lbl, 0, 1, 1, 1)
-
             self.response_lbl.setMaximumSize(QtCore.QSize(240, 30))
-
             self.response_lbl.setText(input_message)
-
         except Exception as e:
             print(e)
 
@@ -464,35 +457,17 @@ class Ui_MainWindow(object):
         self.num0_btn.setText(_translate("MainWindow", "0"))
 
     def establish_connection(self):
-        
+        '''
+        Establishes connection with the server
+        when user has entered all the info needed for
+        a request
+        '''
         try:
-            if self.action == 'GET_BALANCE':
-                response = requests.get(f'http://127.0.0.1:5000/balance?username={self.username}&pin={self.pin}')
-                try:
-                    response_txt = response.json()['balance']
-                except:
-                    response_txt = response.json()['error_message']
-            elif self.action == 'CHANGE_PIN':
-                response = requests.put(f'http://127.0.0.1:5000/change-pin?username={self.username}&pin={self.pin}&new_pin={self.new_pin}')
-                try:
-                    response_txt = response.json()['message']
-                except:
-                    response_txt = response.json()['error_message']
-            elif self.action == 'DEPOSIT':
-                response = requests.put(f'http://127.0.0.1:5000/deposit?username={self.username}&pin={self.pin}&amount={self.amount}')
-                try:
-                    response_txt = response.json()['message']
-                except:
-                    response_txt = response.json()['error_message']
-            elif self.action == 'WITHDRAW':
-                response = requests.put(f'http://127.0.0.1:5000/withdraw?username={self.username}&pin={self.pin}&amount={self.amount}')
-                try:
-                    response_txt = response.json()['message']
-                except:
-                    response_txt = response.json()['error_message']
+            client = BankClient()
+            response_txt = client.make_request(action=self.action, username=self.username, 
+                                                pin=self.pin, amount=self.amount, new_pin=self.new_pin)
         except Exception as e:
             print(e)
-            response = FAILED_TO_CONNECT
 
         self.create_response_screen(response_txt)
             

@@ -2,6 +2,8 @@
 import socket
 from abc import ABCMeta, abstractmethod
 
+FAILED_TO_CONNECT = 'Failed to connect to the server. Please try again later.'
+
 class Client:
 
     def __init__(self, host='localhost', port=8000, protocol=None):
@@ -39,6 +41,7 @@ class Client:
 
         except:
             self.data_socket.close()
+            return FAILED_TO_CONNECT
 
 class ClientProtocol:
     __metaclass__ = ABCMeta
