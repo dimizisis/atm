@@ -54,7 +54,7 @@ class Withdrawal(Resource):
                 abort(422, error_message=WRONG_CREDENTIALS)
         except Exception as e:
             print(e)
-            abort(404, error_message=WITHDRAWAL_FAILURE_ERR)
+            abort(404, error_message=WRONG_CREDENTIALS)
 
 class Deposit(Resource):
     def put(self):
@@ -74,7 +74,7 @@ class Deposit(Resource):
                 abort(422, error_message=WRONG_CREDENTIALS)
         except Exception as e:
             print(e)
-            abort(404, error_message=DEPOSITION_FAILURE_ERR)
+            abort(404, error_message=WRONG_CREDENTIALS)
 
 class PinChange(Resource):
     def put(self):
@@ -94,7 +94,7 @@ class PinChange(Resource):
                 abort(422, error_message=WRONG_CREDENTIALS)
         except Exception as e:
             print(e)
-            abort(404, error_message=CUSTOMER_PIN_CHANGE_FAILURE_ERR)
+            abort(404, error_message=WRONG_CREDENTIALS)
 
 api.add_resource(Withdrawal, '/withdraw', endpoint='withdraw')
 api.add_resource(Deposit, '/deposit', endpoint='deposit')

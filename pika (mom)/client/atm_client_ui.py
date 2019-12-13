@@ -3,13 +3,12 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QKeySequence
 from bank_client_rpc import BankClient
+from return_messages import errors
 import os
 
 KEYS_STYLESHEET = 'background-color: rgb(206, 206, 206);'
 
 BTN_STYLESHEET = 'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(120,120,120), stop: 1 rgb(80,80,80)); border: 1px solid rgb(20,20,20); color: rgb(230,230,230); padding: 4px 8px;} QPushButton:hover {background-color: rgb(70,110,130);} QPushButton:pressed {border-color: rgb(90,200,255); padding: 1px -1px -1px 1px; } QPushButton:checked {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(40,150,200), stop: 1 rgb(90,200,255)); color: rgb(20,20,20);} QPushButton:checked:hover { background-color: rgb(70,110,130);} QPushButton:disabled {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(160,160,160), stop: 1 rgb(120,120,120)); border-color: rgb(60,60,60); color: rgb(40,40,40);}'
-
-FAILED_TO_CONNECT = 'Failed to connect to the server. Please try again later.'
 
 ACTIONS = {'WITHDRAWAL': 'WITHDRAW', 'DEPOSITION': 'DEPOSIT', 'CHANGE PIN': 'CHANGE_PIN', 'BALANCE INQUIRY':'GET_BALANCE'}
 
@@ -365,11 +364,14 @@ class Ui_MainWindow(object):
 
                 self.response_lbl = self.enter_pin_lbl
 
+            if input_message in errors:
+                self.response_lbl.setText(input_message)
+
+            else: self.response_lbl.setText('Your Balance is '+input_message) if self.action == 'GET_BALANCE' else self.response_lbl.setText(input_message)
+
             self.gridLayout.addWidget(self.response_lbl, 0, 1, 1, 1)
 
             self.response_lbl.setMaximumSize(QtCore.QSize(240, 30))
-
-            self.response_lbl.setText(input_message)
 
         except Exception as e:
             print(e)
@@ -475,7 +477,6 @@ class Ui_MainWindow(object):
             response_txt = client.call(action=self.action, username=self.username, pin=self.pin, amount=self.amount, new_pin=self.new_pin)
         except Exception as e:
             print(e)
-            response = FAILED_TO_CONNECT
 
         self.create_response_screen(response_txt)
             

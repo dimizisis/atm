@@ -5,6 +5,7 @@ from PyQt5.QtGui import QKeySequence
 import requests
 import os
 from bank_client import BankClient
+from return_messages import errors
 
 KEYS_STYLESHEET = 'background-color: rgb(206, 206, 206);'
 
@@ -359,6 +360,11 @@ class Ui_MainWindow(object):
                 self.gridLayout.removeWidget(self.pin_lineedit)
                 self.pin_lineedit.setParent(None)
                 self.response_lbl = self.enter_pin_lbl
+
+            if input_message in errors:
+                self.response_lbl.setText(input_message)
+
+            else: self.response_lbl.setText('Your Balance is '+input_message) if self.action == 'GET_BALANCE' else self.response_lbl.setText(input_message)
 
             self.gridLayout.addWidget(self.response_lbl, 0, 1, 1, 1)
             self.response_lbl.setMaximumSize(QtCore.QSize(240, 30))
