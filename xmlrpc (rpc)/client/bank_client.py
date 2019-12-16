@@ -1,4 +1,5 @@
 import numbers
+from return_messages import *
 
 FAILED_TO_CONNECT = 'Failed to connect to the server. Please try again later.'
 
@@ -8,10 +9,13 @@ class BankClient():
         self.proxy = proxy
 
     def authenticate(self, username, pin):
-        return_val = self.proxy.authenticate(username, pin)
-        if isinstance(return_val, numbers.Integral):
-            return return_val, True
-        return return_val, False
+        try:
+            return_val = self.proxy.authenticate(username, pin)
+            if isinstance(return_val, numbers.Integral):
+                return return_val, True
+            return return_val, False
+        except Exception as e:
+            return FAILED_TO_CONNECT, False
 
     def make_request(self, action, username, pin, amount=None, new_pin=None):
 
@@ -19,7 +23,7 @@ class BankClient():
 
         if not success:
             print(return_val)
-            return FAILED_TO_CONNECT
+            return return_val
         
         cid = return_val
         
