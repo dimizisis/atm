@@ -11,7 +11,7 @@ RPC, MOM etc)
 ```
 pip install -r requirements.txt
 ```
-You also need to install [Erlang](https://www.erlang.org/downloads "Erlang's Download Page") and [RabbitMQ](https://www.rabbitmq.com/download.html "RabbitMQ's Download Page") (Tested in 3.8.1 version) (for pika lib).
+You also need to install [Erlang](https://www.erlang.org/downloads "Erlang's Download Page") and [RabbitMQ](https://www.rabbitmq.com/download.html "RabbitMQ's Download Page") (Tested in 3.8.1 version). These are need in order to establish client-server connection with pika lib. 
 
 ### Instructions
 
