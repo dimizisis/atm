@@ -477,9 +477,9 @@ class Ui_MainWindow(object):
         '''
         try:
             bank_server = Pyro4.Proxy('PYRONAME:bank_server')    # use name server object lookup uri shortcut
-            client = BankClient(bank_server)
-            response_txt = client.make_request(action=self.action, username=self.username, pin=int(self.pin), 
+            client = BankClient(server=bank_server, action=self.action, username=self.username, pin=int(self.pin), 
                                                 amount=int(self.amount), new_pin=self.new_pin)
+            response_txt = client.make_request()
         except Exception as e:
             print(e)
 

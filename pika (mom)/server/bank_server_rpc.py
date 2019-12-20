@@ -30,7 +30,7 @@ protocol = BankServerProtocol(client, db_name)  # we add this before everything 
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(host=host))
 
-channel = connection.channel()
+channel = connection.channel()  # channel creation
 
 channel.queue_declare(queue='atm_queue')
 
@@ -47,7 +47,7 @@ def on_request(ch, method, props, body):
                      body=response)
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
-channel.basic_qos(prefetch_count=1)
+channel.basic_qos(prefetch_count=1) # how many messages can a consumer handle a the same time (unacknowledged)
 channel.basic_consume(queue='atm_queue', on_message_callback=on_request)
 
 print('Awaiting RPC requests')

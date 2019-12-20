@@ -477,8 +477,8 @@ class Ui_MainWindow(object):
         '''
         try:
             proxy = xmlrpc.client.ServerProxy(SERVER_PROXY)
-            client = BankClient(proxy)
-            response_txt = client.make_request(action=self.action, username=self.username, pin=int(self.pin), amount=int(self.amount), new_pin=self.new_pin)
+            client = BankClient(proxy=proxy, action=self.action, username=self.username, pin=int(self.pin), amount=int(self.amount), new_pin=self.new_pin)
+            response_txt = client.make_request()
         except Exception as e:
             print(e)
 

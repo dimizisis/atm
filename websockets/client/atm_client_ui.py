@@ -2,9 +2,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QKeySequence
-from bank_client_rpc import BankClient
-from return_messages import errors
+from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtMultimedia import QSound
+import asyncio
+from bank_client import BankClient
 import os
+from return_messages import errors
 
 KEYS_STYLESHEET = 'background-color: rgb(206, 206, 206);'
 
@@ -32,7 +35,6 @@ class NumButton(QtWidgets.QPushButton):
     num_signal = QtCore.pyqtSignal(QtWidgets.QPushButton)
     def __init__(self, parent=None):
         super(NumButton, self).__init__(parent)
-        self.setCheckable(True)
 
     def mousePressEvent(self, event):
         beep()
@@ -124,8 +126,8 @@ class Ui_MainWindow(object):
         self.keys_panel.setFrameShape(QtWidgets.QFrame.Panel)
         self.keys_panel.setFrameShadow(QtWidgets.QFrame.Raised)
         self.keys_panel.setObjectName("keys_panel")
-
-        self.init_numbtns()
+        
+        self.init_btns()
         self.set_num_key_slots()
 
         self.clear_btn = QtWidgets.QPushButton(self.keys_panel)
@@ -160,7 +162,7 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-    def init_numbtns(self):
+    def init_btns(self):
         self.num1_btn = NumButton(self.keys_panel)
         self.num1_btn.setGeometry(QtCore.QRect(10, 10, 61, 61))
         self.num1_btn.setFont(self.font)
@@ -345,8 +347,6 @@ class Ui_MainWindow(object):
         we need to create the screen, in which we will
         show him the response of his request
         '''
-        input_message = input_message.decode('utf-8')
-
         prev_screen = self.curr_screen  # keep previous screen number (we need to know which items to remove dynamically from panel)
         self.curr_screen = 6    # response screen is 5
         try:
@@ -372,7 +372,6 @@ class Ui_MainWindow(object):
             self.gridLayout.addWidget(self.response_lbl, 0, 1, 1, 1)
 
             self.response_lbl.setMaximumSize(QtCore.QSize(240, 30))
-
         except Exception as e:
             print(e)
 
@@ -473,12 +472,12 @@ class Ui_MainWindow(object):
         a request
         '''
         try:
-            client = BankClient()
-            response_txt = client.call(action=self.action, username=self.username, pin=self.pin, amount=self.amount, new_pin=self.new_pin)
+            client = BankClient(self.username, self.pin, self.action, self.amount, self.new_pin)
+            response_txt = asyncio.get_event_loop().run_until_complete(client.make_request())
         except Exception as e:
             print(e)
 
-        # self.create_response_screen(response_txt)
+        self.create_response_screen(response_txt)
             
 if __name__ == '__main__':
 
