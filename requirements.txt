@@ -6,3 +6,4 @@ pika==1.1.0
 pymongo==3.9.0
 PyQt5==5.14.0
 Pyro4==4.77
+websockets==8.1
