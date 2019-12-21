@@ -3,21 +3,19 @@ import random
 import pymongo
 from return_messages import *
 from constants import *
+from Lib.server import ServerProtocol
 
-class BankServerProtocol():
+class BankServerProtocol(ServerProtocol):
 
     def __init__(self, client, database):
         self.client = pymongo.MongoClient(client)
         self.db = self.client.get_database(database)
-        self.websocket = None
 
-    async def process_request(self, websocket, path):
-        self.websocket = websocket
-        input_msg = await self.websocket.recv()
-        print('Received message from client: '+input_msg)
+    def process_request(self, input_msg):
+        print('Received message from client: ', input_msg)
         arr = input_msg.split()
         result = self.perform_action(arr)
-        await self.websocket.send(str(result))
+        return str(result)
         
     def perform_action(self, arr):
 
