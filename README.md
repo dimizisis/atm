@@ -161,8 +161,7 @@ def establish_connection(self):
         try:
             client = BankClient(action=self.action, username=self.username, 
                                                 pin=self.pin, amount=self.amount, new_pin=self.new_pin) # creates a BankClient object
-            response_txt = client.make_request() # make_request function is                                                                                                               # standard for all kinds of 
-                                                                                                        # connection.                                                       
+            response_txt = client.make_request() # make_request function is standard for all kinds of connection.                                                       
         except Exception as e:
             print(e)
 
