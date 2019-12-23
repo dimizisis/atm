@@ -159,9 +159,9 @@ All clients have the same UI (written in PyQt5). What changes among the clients 
 def establish_connection(self):
 
         try:
-            client = BankClient() # creates a BankClient object
-            response_txt = client.make_request(action=self.action, username=self.username, 
-                                                pin=self.pin, amount=self.amount, new_pin=self.new_pin) # make_request function is                                                                                                               # standard for all kinds of 
+            client = BankClient(action=self.action, username=self.username, 
+                                                pin=self.pin, amount=self.amount, new_pin=self.new_pin) # creates a BankClient object
+            response_txt = client.make_request() # make_request function is                                                                                                               # standard for all kinds of 
                                                                                                         # connection.                                                       
         except Exception as e:
             print(e)
