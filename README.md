@@ -134,6 +134,23 @@ To start PyQt5 client from command line/prompt:
 python atm_client_ui.py
 ```
 
+#### zeromq
+
+##### Server
+
+To start the server from command line/prompt:
+
+```
+python bank_server.py
+```
+##### Client
+
+To start PyQt5 client from command line/prompt:
+
+```
+python atm_client_ui.py
+```
+
 ### Note
 
 All clients have the same UI (written in PyQt5). What changes among the clients is the bank_client py file, whose class (BankClient class) is always called inside the establish_connection function (atm_client_ui.py):
