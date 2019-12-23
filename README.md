@@ -134,7 +134,7 @@ To start PyQt5 client from command line/prompt:
 python atm_client_ui.py
 ```
 
-#### zeromq
+#### thrift
 
 ##### Server
 
