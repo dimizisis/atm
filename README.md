@@ -4,6 +4,8 @@
 This is an ATM implementation (ATM is the client, bank is the server), using multiple connection types (web-services,
 RPC, MOM etc)
 
+Note: Instead of the card (which originally contains all the needed info about the customer, except the pin number) I used a username, in order to identify customers.
+
 ![alt text](https://i.imgur.com/jnouuEE.png "ATM Interface in PyQt5")
 
 ### Prerequisites
@@ -16,6 +18,20 @@ You also need to install [Erlang](https://www.erlang.org/downloads "Erlang's Dow
 ### Instructions
 
 #### sockets
+
+##### Customer Creation/Removal
+
+Inside folder customer_create_delete, there are:
+
+        (i) create_customer.py for customer creation
+        (ii) delete_customer.py for customer removal
+
+Usage:
+
+        (i) python create_customer.py
+        (ii) python delete_customer.py
+
+When you enter the info asked (username, pin, full name) a customer will be created in MongoDB (Atlas) database. After creation, you may perform operations on ATM (for the created customer).
 
 ##### Server
 
