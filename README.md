@@ -17,8 +17,6 @@ You also need to install [Erlang](https://www.erlang.org/downloads "Erlang's Dow
 
 ### Instructions
 
-#### sockets
-
 ##### Customer Creation/Removal
 
 Inside folder customer_create_delete, there are:
@@ -32,6 +30,8 @@ Usage:
         (ii) python delete_customer.py
 
 When you enter the info asked (username, pin, full name) a customer will be created in MongoDB (Atlas) database. After creation, you may perform operations on ATM (for the created customer).
+
+#### sockets
 
 ##### Server
 
