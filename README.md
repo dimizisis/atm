@@ -169,9 +169,9 @@ python atm_client_ui.py
 
 ### Note
 
-All clients have the same UI (written in PyQt5). What changes among the clients is the bank_client py file, whose class (BankClient class) is always called inside the establish_connection function (atm_client_ui.py):
+All clients have the same UI (written in PyQt5). What changes among the clients is the ```bank_client.py``` file, whose class (```BankClient``` class) is always called inside the ```establish_connection()``` function (```atm_client_ui.py```):
 
-```
+```python
 def establish_connection(self):
 
         try:
@@ -198,13 +198,13 @@ You may wanna check [PyMongo's Documentation](https://api.mongodb.com/python/cur
 
 #### Connection with the database:
 
-```
+```python
 client = pymongo.MongoClient(client_string) # MongoDB Client created, client_string is the connection string inside the ini file
 db = self.client.get_database(database_name)  # Get a Database with the given name (database_name)
 ```
 
 An operation example:
 
-```
+```python
 db.customer.find_one({'username': <username>})  # from collection customer of db, find one document where field "username" equals to <username>
 ```
